@@ -1,0 +1,35 @@
+# Maven
+target/
+*.jar
+*.war
+*.class
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node / React
+node_modules/
+dist/
+.vite/
+*.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes (if mounted locally)
+.docker-volumes/
+
+# Env files with secrets
+.env.local
+.env.production
+
+# Logs
+*.log
+logs/
