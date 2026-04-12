@@ -135,9 +135,41 @@ services:
     networks:
       - interview-net
 
-  # ─── Application services (added per stage) ──────────────────────
+  # ─── Application services ────────────────────────────────────────
+  auth-service:
+    build:
+      context: ./auth-service
+    container_name: diploma-auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/interview_platform?currentSchema=auth_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
+      JWT_ACCESS_TTL: PT15M
+      JWT_REFRESH_TTL: P30D
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - interview-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   # api-gateway:       8080
-  # auth-service:      8081
   # user-service:      8082
   # subscription-service: 8083
   # session-service:   8084
