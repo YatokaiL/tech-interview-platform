@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              "[/**]":
+                allowed-origins:
+                  - "http://localhost:3000"
+                  - "http://localhost:5173"
+                allowed-methods: "*"
+                allowed-headers: "*"
+                allow-credentials: true
+                max-age: 3600
+          routes:
+            - id: auth-service
+              uri: ${AUTH_SERVICE_URI:http://auth-service:8081}
+              predicates:
+                - Path=/api/auth/**
+
+            # Future routes (placeholders, to be enabled per stage):
+            # - id: user-service
+            #   uri: http://user-service:8082
+            #   predicates: [Path=/api/users/**]
+            # - id: session-service
+            #   uri: http://session-service:8084
+            #   predicates: [Path=/api/sessions/**]
+
+server:
+  port: ${SERVER_PORT:8080}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-me-in-production-min-256-bits-long-string-here-please}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+
+logging:
+  level:
+    com.diploma: INFO
+    org.springframework.cloud.gateway: INFO
+    org.springframework.security: INFO
