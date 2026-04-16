@@ -136,6 +136,28 @@ services:
       - interview-net
 
   # ─── Application services ────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: diploma-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      AUTH_SERVICE_URI: http://auth-service:8081
+      JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
+    depends_on:
+      auth-service:
+        condition: service_healthy
+    networks:
+      - interview-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   auth-service:
     build:
       context: ./auth-service
@@ -169,7 +191,6 @@ services:
       retries: 5
       start_period: 60s
 
-  # api-gateway:       8080
   # user-service:      8082
   # subscription-service: 8083
   # session-service:   8084
