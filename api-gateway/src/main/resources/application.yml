@@ -22,13 +22,15 @@ spring:
               predicates:
                 - Path=/api/auth/**
 
-            # Future routes (placeholders, to be enabled per stage):
-            # - id: user-service
-            #   uri: http://user-service:8082
-            #   predicates: [Path=/api/users/**]
-            # - id: session-service
-            #   uri: http://session-service:8084
-            #   predicates: [Path=/api/sessions/**]
+            - id: user-service-users
+              uri: ${USER_SERVICE_URI:http://user-service:8082}
+              predicates:
+                - Path=/api/users/**
+
+            - id: user-service-companies
+              uri: ${USER_SERVICE_URI:http://user-service:8082}
+              predicates:
+                - Path=/api/companies/**
 
 server:
   port: ${SERVER_PORT:8080}
