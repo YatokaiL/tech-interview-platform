@@ -7,13 +7,14 @@ import com.diploma.user_service.exception.NotFoundException;
 import com.diploma.user_service.exception.ValidationException;
 import com.diploma.user_service.repository.RoleRepository;
 import com.diploma.user_service.repository.UserRepository;
+import com.diploma.user_service.repository.UserSpecifications;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.UUID;
 
@@ -27,9 +28,13 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Page<User> search(String q, String role, UUID companyId, Pageable pageable) {
-        String normalizedQ      = StringUtils.hasText(q) ? q.trim() : null;
-        String normalizedRole   = StringUtils.hasText(role) ? role.trim() : null;
-        return userRepository.search(normalizedQ, normalizedRole, companyId, pageable);
+        Specification<User> spec = Specification
+                .allOf(
+                        UserSpecifications.emailContains(q),
+                        UserSpecifications.hasRole(role),
+                        UserSpecifications.hasCompany(companyId)
+                );
+        return userRepository.findAll(spec, pageable);
     }
 
     @Transactional(readOnly = true)

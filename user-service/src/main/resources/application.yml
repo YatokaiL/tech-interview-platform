@@ -30,6 +30,11 @@ spring:
 
 server:
   port: ${SERVER_PORT:8082}
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 app:
   jwt:
