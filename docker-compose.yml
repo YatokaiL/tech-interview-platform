@@ -136,6 +136,18 @@ services:
       - interview-net
 
   # ─── Application services ────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+    container_name: diploma-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - interview-net
+
   api-gateway:
     build:
       context: ./api-gateway
