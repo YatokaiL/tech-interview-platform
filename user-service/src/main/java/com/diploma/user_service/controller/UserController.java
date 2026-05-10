@@ -2,6 +2,7 @@ package com.diploma.user_service.controller;
 
 import com.diploma.user_service.dto.PageResponse;
 import com.diploma.user_service.dto.UpdateUserRequest;
+import com.diploma.user_service.dto.UserLookupResponse;
 import com.diploma.user_service.dto.UserResponse;
 import com.diploma.user_service.entity.User;
 import com.diploma.user_service.service.UserService;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -51,6 +53,22 @@ public class UserController {
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal Jwt jwt) {
         UUID userId = UUID.fromString(jwt.getSubject());
         return ResponseEntity.ok(UserResponse.from(userService.getById(userId)));
+    }
+
+    @GetMapping("/lookup")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INTERVIEWER', 'HR_MANAGER')")
+    public ResponseEntity<List<UserLookupResponse>> lookup(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false, defaultValue = "CANDIDATE") String role,
+            @RequestParam(defaultValue = "20") int limit
+    ) {
+        int size = Math.min(Math.max(limit, 1), 50);
+        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.ASC, "email"));
+        List<UserLookupResponse> result = userService.search(q, role, null, pageable)
+                .getContent().stream()
+                .map(UserLookupResponse::from)
+                .toList();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
