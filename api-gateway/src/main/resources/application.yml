@@ -32,6 +32,21 @@ spring:
               predicates:
                 - Path=/api/companies/**
 
+            - id: session-service-sessions
+              uri: ${SESSION_SERVICE_URI:http://session-service:8084}
+              predicates:
+                - Path=/api/sessions/**
+
+            - id: session-service-tasks
+              uri: ${SESSION_SERVICE_URI:http://session-service:8084}
+              predicates:
+                - Path=/api/tasks/**
+
+            - id: session-service-task-categories
+              uri: ${SESSION_SERVICE_URI:http://session-service:8084}
+              predicates:
+                - Path=/api/task-categories/**
+
 server:
   port: ${SERVER_PORT:8080}
 
