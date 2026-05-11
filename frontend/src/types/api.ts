@@ -56,3 +56,77 @@ export interface ApiError {
   violations?: { field: string; message: string }[];
   timestamp: string;
 }
+
+// ─── Tasks ─────────────────────────────────────────────────────────
+export type Difficulty = "EASY" | "MEDIUM" | "HARD";
+
+export interface TaskCategory {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: Difficulty;
+  language: string | null;
+  initialCode: string | null;
+  expectedOutput: string | null;
+  timeLimitMinutes: number | null;
+  companyId: string | null;
+  createdBy: string;
+  categories: TaskCategory[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TaskRequest {
+  title: string;
+  description: string;
+  difficulty: Difficulty;
+  language?: string | null;
+  initialCode?: string | null;
+  expectedOutput?: string | null;
+  timeLimitMinutes?: number | null;
+  categoryIds?: string[];
+}
+
+// ─── Sessions ──────────────────────────────────────────────────────
+export type SessionStatus = "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+export interface Session {
+  id: string;
+  title: string;
+  companyId: string;
+  interviewerId: string;
+  candidateId: string | null;
+  taskId: string | null;
+  taskTitle: string | null;
+  language: string;
+  status: SessionStatus;
+  scheduledAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SessionRequest {
+  title: string;
+  candidateId: string;
+  interviewerId?: string | null;
+  taskId?: string | null;
+  language: string;
+  scheduledAt: string;
+}
+
+// ─── User lookup (for selecting participants) ──────────────────────
+export interface UserLookup {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: Role;
+}
