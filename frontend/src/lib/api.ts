@@ -9,7 +9,20 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+function isPublicAuthEndpoint(url?: string): boolean {
+  if (!url) return false;
+  return (
+    url.startsWith("/auth/login") ||
+    url.startsWith("/auth/register") ||
+    url.startsWith("/auth/refresh")
+  );
+}
+
 api.interceptors.request.use((config) => {
+  if (isPublicAuthEndpoint(config.url)) {
+    if (config.headers) delete config.headers.Authorization;
+    return config;
+  }
   const token = useAuthStore.getState().accessToken;
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
