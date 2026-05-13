@@ -22,10 +22,18 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string }[]> = {
   ADMIN: [
     { to: "/admin", label: "Главная" },
     { to: "/admin/users", label: "Пользователи" },
+    { to: "/sessions", label: "Сессии" },
+    { to: "/tasks", label: "Задачи" },
   ],
-  HR_MANAGER: [{ to: "/hr", label: "Сессии" }],
-  INTERVIEWER: [{ to: "/interviewer", label: "Сессии" }],
-  CANDIDATE: [{ to: "/candidate", label: "Мои интервью" }],
+  HR_MANAGER: [
+    { to: "/sessions", label: "Сессии" },
+    { to: "/tasks", label: "Задачи" },
+  ],
+  INTERVIEWER: [
+    { to: "/sessions", label: "Сессии" },
+    { to: "/tasks", label: "Задачи" },
+  ],
+  CANDIDATE: [{ to: "/sessions", label: "Мои интервью" }],
 };
 
 export function Layout() {
