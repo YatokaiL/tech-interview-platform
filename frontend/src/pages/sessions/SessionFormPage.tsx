@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import { api } from "@/lib/api";
+import { useAuthStore } from "@/stores/auth";
 import type {
   ApiError,
   PageResponse,
@@ -35,10 +36,12 @@ import {
 } from "@/components/ui/select";
 
 const NO_TASK = "__none__";
+const SELF_INTERVIEWER = "__self__";
 
 interface FormValues {
   title: string;
   candidateId: string;
+  interviewerId: string;
   taskId: string;
   language: string;
   scheduledAtLocal: string;
@@ -47,13 +50,28 @@ interface FormValues {
 export function SessionFormPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const isInterviewer = user?.role === "INTERVIEWER";
+
   const [candidateQuery, setCandidateQuery] = useState("");
+  const [interviewerQuery, setInterviewerQuery] = useState("");
 
   const { data: candidates = [] } = useQuery({
-    queryKey: ["users-lookup", candidateQuery],
+    queryKey: ["users-lookup", "CANDIDATE", candidateQuery],
     queryFn: async () => {
       const params: Record<string, string | number> = { role: "CANDIDATE", limit: 20 };
       if (candidateQuery.trim()) params.q = candidateQuery.trim();
+      return (await api.get<UserLookup[]>("/users/lookup", { params })).data;
+    },
+    staleTime: 10_000,
+  });
+
+  const { data: interviewers = [] } = useQuery({
+    enabled: !isInterviewer,
+    queryKey: ["users-lookup", "INTERVIEWER", interviewerQuery],
+    queryFn: async () => {
+      const params: Record<string, string | number> = { role: "INTERVIEWER", limit: 20 };
+      if (interviewerQuery.trim()) params.q = interviewerQuery.trim();
       return (await api.get<UserLookup[]>("/users/lookup", { params })).data;
     },
     staleTime: 10_000,
@@ -75,6 +93,7 @@ export function SessionFormPage() {
     defaultValues: {
       title: "",
       candidateId: "",
+      interviewerId: isInterviewer ? "" : SELF_INTERVIEWER,
       taskId: NO_TASK,
       language: "java",
       scheduledAtLocal: defaultDateTimeLocal(),
@@ -83,9 +102,19 @@ export function SessionFormPage() {
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
+      let interviewerId: string | null | undefined;
+      if (isInterviewer) {
+        interviewerId = undefined;
+      } else if (values.interviewerId === SELF_INTERVIEWER) {
+        interviewerId = user?.id ?? null;
+      } else {
+        interviewerId = values.interviewerId;
+      }
+
       const payload: SessionRequest = {
         title: values.title,
         candidateId: values.candidateId,
+        interviewerId,
         taskId: values.taskId === NO_TASK ? null : values.taskId,
         language: values.language,
         scheduledAt: new Date(values.scheduledAtLocal).toISOString(),
@@ -169,6 +198,42 @@ export function SessionFormPage() {
               <p className="text-sm text-destructive">{errors.candidateId.message}</p>
             )}
           </div>
+
+          {!isInterviewer && (
+            <div className="space-y-2">
+              <Label>Интервьюер</Label>
+              <Input
+                placeholder="Поиск по email (или оставьте «Я провожу сам(а)»)"
+                value={interviewerQuery}
+                onChange={(e) => setInterviewerQuery(e.target.value)}
+              />
+              <Controller
+                control={control}
+                name="interviewerId"
+                rules={{ required: "Выберите интервьюера" }}
+                render={({ field }) => (
+                  <Select value={field.value || undefined} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите интервьюера" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SELF_INTERVIEWER}>
+                        Я провожу сам(а) — {user?.email}
+                      </SelectItem>
+                      {interviewers.map((i) => (
+                        <SelectItem key={i.id} value={i.id}>
+                          {formatUserName(i)} — {i.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.interviewerId && (
+                <p className="text-sm text-destructive">{errors.interviewerId.message}</p>
+              )}
+            </div>
+          )}
 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-2">
