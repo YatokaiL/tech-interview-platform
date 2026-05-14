@@ -6,11 +6,14 @@ import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { HomeRedirect } from "@/pages/HomeRedirect";
 import { ProfilePage } from "@/pages/ProfilePage";
-import { CandidateDashboard } from "@/pages/CandidateDashboard";
-import { InterviewerDashboard } from "@/pages/InterviewerDashboard";
-import { HrDashboard } from "@/pages/HrDashboard";
 import { AdminDashboard } from "@/pages/AdminDashboard";
 import { UsersPage } from "@/pages/admin/UsersPage";
+import { TasksPage } from "@/pages/tasks/TasksPage";
+import { TaskDetailPage } from "@/pages/tasks/TaskDetailPage";
+import { TaskFormPage } from "@/pages/tasks/TaskFormPage";
+import { SessionsPage } from "@/pages/sessions/SessionsPage";
+import { SessionFormPage } from "@/pages/sessions/SessionFormPage";
+import { SessionDetailPage } from "@/pages/sessions/SessionDetailPage";
 
 export default function App() {
   return (
@@ -23,15 +26,24 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<HomeRedirect />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route element={<ProtectedRoute allowedRoles={["CANDIDATE"]} />}>
-              <Route path="/candidate" element={<CandidateDashboard />} />
+
+            <Route path="/sessions" element={<SessionsPage />} />
+            <Route path="/sessions/:id" element={<SessionDetailPage />} />
+            <Route
+              element={<ProtectedRoute allowedRoles={["INTERVIEWER", "HR_MANAGER", "ADMIN"]} />}
+            >
+              <Route path="/sessions/new" element={<SessionFormPage />} />
             </Route>
-            <Route element={<ProtectedRoute allowedRoles={["INTERVIEWER"]} />}>
-              <Route path="/interviewer" element={<InterviewerDashboard />} />
+
+            <Route
+              element={<ProtectedRoute allowedRoles={["INTERVIEWER", "HR_MANAGER", "ADMIN"]} />}
+            >
+              <Route path="/tasks" element={<TasksPage />} />
+              <Route path="/tasks/new" element={<TaskFormPage />} />
+              <Route path="/tasks/:id/edit" element={<TaskFormPage />} />
             </Route>
-            <Route element={<ProtectedRoute allowedRoles={["HR_MANAGER"]} />}>
-              <Route path="/hr" element={<HrDashboard />} />
-            </Route>
+            <Route path="/tasks/:id" element={<TaskDetailPage />} />
+
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<UsersPage />} />
