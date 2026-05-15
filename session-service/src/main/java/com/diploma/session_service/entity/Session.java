@@ -40,7 +40,7 @@ public class Session {
     @Column(name = "candidate_id")
     private UUID candidateId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "task_id")
     private Task task;
 
