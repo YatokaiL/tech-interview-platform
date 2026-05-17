@@ -1,8 +1,11 @@
 package com.diploma.session_service.controller;
 
+import com.diploma.session_service.dto.CodeSnapshotRequest;
+import com.diploma.session_service.dto.CodeSnapshotResponse;
 import com.diploma.session_service.dto.PageResponse;
 import com.diploma.session_service.dto.SessionRequest;
 import com.diploma.session_service.dto.SessionResponse;
+import com.diploma.session_service.entity.CodeSnapshot;
 import com.diploma.session_service.entity.Session;
 import com.diploma.session_service.entity.SessionStatus;
 import com.diploma.session_service.service.SessionService;
@@ -94,5 +97,22 @@ public class SessionController {
     @PreAuthorize("hasAnyRole('INTERVIEWER', 'HR_MANAGER', 'ADMIN')")
     public ResponseEntity<SessionResponse> cancel(@PathVariable UUID id) {
         return ResponseEntity.ok(SessionResponse.from(sessionService.cancel(id)));
+    }
+
+    @GetMapping("/{id}/snapshots/latest")
+    public ResponseEntity<CodeSnapshotResponse> latestSnapshot(@PathVariable UUID id) {
+        return sessionService.latestSnapshot(id)
+                .map(CodeSnapshotResponse::from)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    @PostMapping("/{id}/snapshots")
+    public ResponseEntity<CodeSnapshotResponse> saveSnapshot(
+            @PathVariable UUID id,
+            @Valid @RequestBody CodeSnapshotRequest request
+    ) {
+        CodeSnapshot saved = sessionService.saveSnapshot(id, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(CodeSnapshotResponse.from(saved));
     }
 }

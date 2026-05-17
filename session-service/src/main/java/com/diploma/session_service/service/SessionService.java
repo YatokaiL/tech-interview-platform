@@ -1,16 +1,20 @@
 package com.diploma.session_service.service;
 
+import com.diploma.session_service.dto.CodeSnapshotRequest;
 import com.diploma.session_service.dto.SessionCompletedEvent;
 import com.diploma.session_service.dto.SessionCreatedEvent;
 import com.diploma.session_service.dto.SessionRequest;
+import com.diploma.session_service.entity.CodeSnapshot;
 import com.diploma.session_service.entity.Session;
 import com.diploma.session_service.entity.SessionParticipant;
 import com.diploma.session_service.entity.SessionStatus;
+import com.diploma.session_service.entity.SnapshotType;
 import com.diploma.session_service.entity.Task;
 import com.diploma.session_service.exception.ForbiddenException;
 import com.diploma.session_service.exception.NotFoundException;
 import com.diploma.session_service.exception.ValidationException;
 import com.diploma.session_service.kafka.SessionEventPublisher;
+import com.diploma.session_service.repository.CodeSnapshotRepository;
 import com.diploma.session_service.repository.SessionParticipantRepository;
 import com.diploma.session_service.repository.SessionRepository;
 import com.diploma.session_service.repository.SessionSpecifications;
@@ -25,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -35,6 +40,7 @@ public class SessionService {
     private final SessionRepository sessionRepository;
     private final SessionParticipantRepository participantRepository;
     private final TaskRepository taskRepository;
+    private final CodeSnapshotRepository snapshotRepository;
     private final SessionEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -240,6 +246,42 @@ public class SessionService {
         if (!CurrentUser.isInterviewer() || !session.getInterviewerId().equals(CurrentUser.id())) {
             throw new ForbiddenException("Only the assigned interviewer can perform this action");
         }
+    }
+
+    // --- code snapshots ----------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public Optional<CodeSnapshot> latestSnapshot(UUID sessionId) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("Session", sessionId));
+        ensureCanView(session);
+        return snapshotRepository.findFirstBySessionIdOrderByCreatedAtDesc(sessionId);
+    }
+
+    @Transactional
+    public CodeSnapshot saveSnapshot(UUID sessionId, CodeSnapshotRequest request) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("Session", sessionId));
+        ensureCanEditCode(session);
+
+        if (session.getStatus() == SessionStatus.CANCELLED) {
+            throw new ValidationException("Cannot save snapshot for a cancelled session");
+        }
+
+        CodeSnapshot snapshot = new CodeSnapshot();
+        snapshot.setSessionId(sessionId);
+        snapshot.setLanguage(request.language());
+        snapshot.setCode(request.code());
+        snapshot.setSnapshotType(request.snapshotType() != null ? request.snapshotType() : SnapshotType.AUTO);
+        return snapshotRepository.save(snapshot);
+    }
+
+    private void ensureCanEditCode(Session session) {
+        if (CurrentUser.isAdmin()) return;
+        UUID userId = CurrentUser.id();
+        if (CurrentUser.isInterviewer() && session.getInterviewerId().equals(userId)) return;
+        if (CurrentUser.isCandidate() && userId.equals(session.getCandidateId())) return;
+        throw new ForbiddenException("Only the assigned interviewer or candidate can edit the session code");
     }
 
     private UUID resolveInterviewerId(SessionRequest request) {
