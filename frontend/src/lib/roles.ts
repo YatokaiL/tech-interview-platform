@@ -46,6 +46,21 @@ export const LANGUAGE_OPTIONS = [
   { value: "cpp", label: "C++" },
 ];
 
+export function monacoLanguage(lang: string | null | undefined): string {
+  switch ((lang || "").toLowerCase()) {
+    case "java": return "java";
+    case "python": return "python";
+    case "javascript":
+    case "js": return "javascript";
+    case "typescript":
+    case "ts": return "typescript";
+    case "go": return "go";
+    case "cpp":
+    case "c++": return "cpp";
+    default: return "plaintext";
+  }
+}
+
 export function initials(firstName?: string | null, lastName?: string | null, email?: string) {
   const f = firstName?.[0] ?? "";
   const l = lastName?.[0] ?? "";

@@ -10,6 +10,7 @@ import { STATUS_BADGE_VARIANT, STATUS_LABELS } from "@/lib/roles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CollabRoom } from "@/components/CollabRoom";
 
 function errorMessage(err: unknown, fallback: string) {
   return isAxiosError<ApiError>(err) && err.response?.data?.message
@@ -88,8 +89,10 @@ export function SessionDetailPage() {
   const isHr = user?.role === "HR_MANAGER";
   const canManage = isInterviewer || isAdmin || isHr;
 
+  const showCollab = session.status !== "CANCELLED";
+
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{session.title}</h1>
@@ -145,6 +148,8 @@ export function SessionDetailPage() {
           </div>
         )}
       </div>
+
+      {showCollab && <CollabRoom session={session} />}
 
       <Card>
         <CardHeader>

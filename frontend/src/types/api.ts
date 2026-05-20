@@ -122,6 +122,24 @@ export interface SessionRequest {
   scheduledAt: string;
 }
 
+// ─── Code snapshots ────────────────────────────────────────────────
+export type SnapshotType = "AUTO" | "MANUAL" | "FINAL";
+
+export interface CodeSnapshot {
+  id: string;
+  sessionId: string;
+  language: string;
+  code: string;
+  snapshotType: SnapshotType;
+  createdAt: string;
+}
+
+export interface CodeSnapshotRequest {
+  language: string;
+  code: string;
+  snapshotType?: SnapshotType;
+}
+
 // ─── User lookup (for selecting participants) ──────────────────────
 export interface UserLookup {
   id: string;
