@@ -135,6 +135,12 @@ public class CollabWebSocketHandler extends TextWebSocketHandler {
         out.put("at", Instant.now().toString());
 
         broadcastAll(room, out);
+
+        ObjectNode persisted = mapper.createObjectNode();
+        persisted.put("text", text);
+        persisted.put("email", principal.email());
+        persisted.put("role", principal.role());
+        sessionClient.appendEvent(room.getSessionId(), principal.rawToken(), "chat", persisted);
     }
 
     // --- helpers -----------------------------------------------------------

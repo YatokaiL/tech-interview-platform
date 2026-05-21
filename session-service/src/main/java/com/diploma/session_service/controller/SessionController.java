@@ -3,10 +3,13 @@ package com.diploma.session_service.controller;
 import com.diploma.session_service.dto.CodeSnapshotRequest;
 import com.diploma.session_service.dto.CodeSnapshotResponse;
 import com.diploma.session_service.dto.PageResponse;
+import com.diploma.session_service.dto.SessionEventRequest;
+import com.diploma.session_service.dto.SessionEventResponse;
 import com.diploma.session_service.dto.SessionRequest;
 import com.diploma.session_service.dto.SessionResponse;
 import com.diploma.session_service.entity.CodeSnapshot;
 import com.diploma.session_service.entity.Session;
+import com.diploma.session_service.entity.SessionEvent;
 import com.diploma.session_service.entity.SessionStatus;
 import com.diploma.session_service.service.SessionService;
 import jakarta.validation.Valid;
@@ -29,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -114,5 +118,26 @@ public class SessionController {
     ) {
         CodeSnapshot saved = sessionService.saveSnapshot(id, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(CodeSnapshotResponse.from(saved));
+    }
+
+    @GetMapping("/{id}/events")
+    public ResponseEntity<List<SessionEventResponse>> listEvents(
+            @PathVariable UUID id,
+            @RequestParam(required = false) String type,
+            @RequestParam(defaultValue = "200") int limit
+    ) {
+        List<SessionEventResponse> body = sessionService.listEvents(id, type, limit).stream()
+                .map(SessionEventResponse::from)
+                .toList();
+        return ResponseEntity.ok(body);
+    }
+
+    @PostMapping("/{id}/events")
+    public ResponseEntity<SessionEventResponse> appendEvent(
+            @PathVariable UUID id,
+            @Valid @RequestBody SessionEventRequest request
+    ) {
+        SessionEvent saved = sessionService.appendEvent(id, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(SessionEventResponse.from(saved));
     }
 }

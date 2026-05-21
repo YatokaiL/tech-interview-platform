@@ -3,9 +3,11 @@ package com.diploma.session_service.service;
 import com.diploma.session_service.dto.CodeSnapshotRequest;
 import com.diploma.session_service.dto.SessionCompletedEvent;
 import com.diploma.session_service.dto.SessionCreatedEvent;
+import com.diploma.session_service.dto.SessionEventRequest;
 import com.diploma.session_service.dto.SessionRequest;
 import com.diploma.session_service.entity.CodeSnapshot;
 import com.diploma.session_service.entity.Session;
+import com.diploma.session_service.entity.SessionEvent;
 import com.diploma.session_service.entity.SessionParticipant;
 import com.diploma.session_service.entity.SessionStatus;
 import com.diploma.session_service.entity.SnapshotType;
@@ -15,6 +17,7 @@ import com.diploma.session_service.exception.NotFoundException;
 import com.diploma.session_service.exception.ValidationException;
 import com.diploma.session_service.kafka.SessionEventPublisher;
 import com.diploma.session_service.repository.CodeSnapshotRepository;
+import com.diploma.session_service.repository.SessionEventRepository;
 import com.diploma.session_service.repository.SessionParticipantRepository;
 import com.diploma.session_service.repository.SessionRepository;
 import com.diploma.session_service.repository.SessionSpecifications;
@@ -23,12 +26,14 @@ import com.diploma.session_service.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,6 +46,7 @@ public class SessionService {
     private final SessionParticipantRepository participantRepository;
     private final TaskRepository taskRepository;
     private final CodeSnapshotRepository snapshotRepository;
+    private final SessionEventRepository sessionEventRepository;
     private final SessionEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -274,6 +280,37 @@ public class SessionService {
         snapshot.setCode(request.code());
         snapshot.setSnapshotType(request.snapshotType() != null ? request.snapshotType() : SnapshotType.AUTO);
         return snapshotRepository.save(snapshot);
+    }
+
+    // --- session events ----------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public List<SessionEvent> listEvents(UUID sessionId, String type, int limit) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("Session", sessionId));
+        ensureCanView(session);
+
+        int capped = Math.max(1, Math.min(limit, 500));
+        Pageable page = PageRequest.of(0, capped);
+
+        if (type == null || type.isBlank()) {
+            return sessionEventRepository.findBySessionIdOrderByCreatedAtAsc(sessionId, page);
+        }
+        return sessionEventRepository.findBySessionIdAndEventTypeOrderByCreatedAtAsc(sessionId, type, page);
+    }
+
+    @Transactional
+    public SessionEvent appendEvent(UUID sessionId, SessionEventRequest request) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("Session", sessionId));
+        ensureCanView(session);
+
+        SessionEvent event = new SessionEvent();
+        event.setSessionId(sessionId);
+        event.setEventType(request.eventType());
+        event.setPayload(request.payload());
+        event.setUserId(CurrentUser.id());
+        return sessionEventRepository.save(event);
     }
 
     private void ensureCanEditCode(Session session) {

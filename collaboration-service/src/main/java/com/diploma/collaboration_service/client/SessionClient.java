@@ -55,6 +55,22 @@ public class SessionClient {
         }
     }
 
+    public void appendEvent(UUID sessionId, String bearerToken, String eventType, Object payload) {
+        try {
+            http.post()
+                    .uri("/api/sessions/{id}/events", sessionId)
+                    .header("Authorization", "Bearer " + bearerToken)
+                    .header("Content-Type", "application/json")
+                    .body(new EventBody(eventType, payload))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (HttpStatusCodeException e) {
+            log.warn("Failed to append session event ({}, {}): {}", sessionId, eventType, e.getStatusCode());
+        }
+    }
+
+    private record EventBody(String eventType, Object payload) {}
+
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SessionInfo {
