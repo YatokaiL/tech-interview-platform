@@ -47,6 +47,11 @@ spring:
               predicates:
                 - Path=/api/task-categories/**
 
+            - id: collaboration-service-ws
+              uri: ${COLLABORATION_SERVICE_WS_URI:ws://collaboration-service:8085}
+              predicates:
+                - Path=/ws/sessions/**
+
 server:
   port: ${SERVER_PORT:8080}
 

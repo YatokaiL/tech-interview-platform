@@ -159,6 +159,7 @@ services:
       AUTH_SERVICE_URI: http://auth-service:8081
       USER_SERVICE_URI: http://user-service:8082
       SESSION_SERVICE_URI: http://session-service:8084
+      COLLABORATION_SERVICE_WS_URI: ws://collaboration-service:8085
       JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
     depends_on:
       auth-service:
@@ -166,6 +167,8 @@ services:
       user-service:
         condition: service_healthy
       session-service:
+        condition: service_healthy
+      collaboration-service:
         condition: service_healthy
     networks:
       - interview-net
@@ -265,8 +268,29 @@ services:
       retries: 5
       start_period: 60s
 
+  collaboration-service:
+    build:
+      context: ./collaboration-service
+    container_name: diploma-collaboration-service
+    ports:
+      - "8085:8085"
+    environment:
+      SERVER_PORT: 8085
+      SESSION_SERVICE_URI: http://session-service:8084
+      JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
+    depends_on:
+      session-service:
+        condition: service_healthy
+    networks:
+      - interview-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   # subscription-service: 8083
-  # collaboration-service: 8085
   # execution-service: 8086
   # analysis-service:  8087
   # review-service:    8088
