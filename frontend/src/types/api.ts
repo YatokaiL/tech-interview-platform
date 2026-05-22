@@ -140,6 +140,15 @@ export interface CodeSnapshotRequest {
   snapshotType?: SnapshotType;
 }
 
+export interface SessionEvent {
+  id: string;
+  sessionId: string;
+  eventType: string;
+  payload: unknown;
+  userId: string | null;
+  createdAt: string;
+}
+
 // ─── User lookup (for selecting participants) ──────────────────────
 export interface UserLookup {
   id: string;

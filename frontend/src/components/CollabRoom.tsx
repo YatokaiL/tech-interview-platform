@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import Editor from "@monaco-editor/react";
 import { Loader2, Save, Send, Users, Wifi, WifiOff } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +18,7 @@ import type {
   CodeSnapshot,
   CodeSnapshotRequest,
   Session,
+  SessionEvent,
 } from "@/types/api";
 import { buildCollabUrl, type Presence, type ServerMessage } from "@/lib/collab";
 import { Button } from "@/components/ui/button";
@@ -31,11 +39,18 @@ interface CollabRoomProps {
   session: Session;
 }
 
+export interface CollabRoomHandle {
+  flushSnapshot: (type?: "AUTO" | "MANUAL" | "FINAL") => Promise<void>;
+}
+
 const EDIT_DEBOUNCE_MS = 250;
 const AUTOSAVE_INTERVAL_MS = 30_000;
 const MAX_CHAT_ENTRIES = 200;
 
-export function CollabRoom({ session }: CollabRoomProps) {
+export const CollabRoom = forwardRef<CollabRoomHandle, CollabRoomProps>(function CollabRoom(
+  { session },
+  ref
+) {
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.accessToken);
 
@@ -74,6 +89,38 @@ export function CollabRoom({ session }: CollabRoomProps) {
       return next.length > MAX_CHAT_ENTRIES ? next.slice(-MAX_CHAT_ENTRIES) : next;
     });
   }, []);
+
+  // Load chat history once on mount
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<SessionEvent[]>(`/sessions/${session.id}/events`, {
+        params: { type: "chat", limit: 200 },
+      })
+      .then((res) => {
+        if (cancelled) return;
+        const entries: ChatEntry[] = res.data.map((e) => {
+          const p = (e.payload ?? {}) as { text?: string; email?: string; role?: string };
+          return {
+            id: ++chatIdRef.current,
+            by: {
+              userId: e.userId ?? "",
+              email: p.email ?? "?",
+              role: p.role ?? "",
+            },
+            text: p.text ?? "",
+            at: e.createdAt,
+          };
+        });
+        setChat(entries);
+      })
+      .catch(() => {
+        // history fetch failure is non-fatal
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session.id]);
 
   // Load initial snapshot (for sessions that aren't IN_PROGRESS we still want to show last code)
   useEffect(() => {
@@ -196,9 +243,9 @@ export function CollabRoom({ session }: CollabRoomProps) {
   );
 
   const saveSnapshot = useCallback(
-    async (snapshotType: "AUTO" | "MANUAL" = "AUTO") => {
-      if (!canEdit) return;
-      if (!dirtyRef.current && snapshotType === "AUTO") return;
+    async (snapshotType: "AUTO" | "MANUAL" | "FINAL" = "AUTO") => {
+      if (snapshotType === "AUTO" && !canEdit) return;
+      if (snapshotType === "AUTO" && !dirtyRef.current) return;
       const body: CodeSnapshotRequest = {
         language: languageRef.current,
         code: codeRef.current,
@@ -215,12 +262,20 @@ export function CollabRoom({ session }: CollabRoomProps) {
           isAxiosError<ApiError>(err) && err.response?.data?.message
             ? err.response.data.message
             : "Не удалось сохранить снимок";
-        toast.error(msg);
+        if (snapshotType !== "FINAL") toast.error(msg);
       } finally {
         setSavingSnapshot(false);
       }
     },
     [canEdit, session.id]
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      flushSnapshot: (type = "AUTO") => saveSnapshot(type),
+    }),
+    [saveSnapshot]
   );
 
   // Periodic auto-save when editing is allowed
@@ -370,7 +425,7 @@ export function CollabRoom({ session }: CollabRoomProps) {
       </div>
     </div>
   );
-}
+});
 
 function ConnBadge({ state, disabled }: { state: ConnState; disabled: boolean }) {
   if (disabled) {
