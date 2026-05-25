@@ -160,6 +160,7 @@ services:
       USER_SERVICE_URI: http://user-service:8082
       SESSION_SERVICE_URI: http://session-service:8084
       COLLABORATION_SERVICE_WS_URI: ws://collaboration-service:8085
+      EXECUTION_SERVICE_URI: http://execution-service:8086
       JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
     depends_on:
       auth-service:
@@ -170,6 +171,8 @@ services:
         condition: service_healthy
       collaboration-service:
         condition: service_healthy
+      execution-service:
+        condition: service_started
     networks:
       - interview-net
     healthcheck:
@@ -290,8 +293,40 @@ services:
       retries: 5
       start_period: 60s
 
+  execution-service:
+    build:
+      context: ./execution-service
+    container_name: diploma-execution-service
+    ports:
+      - "8086:8086"
+    environment:
+      SERVER_PORT: 8086
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/interview_platform?currentSchema=execution_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SESSION_SERVICE_URI: http://session-service:8084
+      JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
+      DOCKER_HOST_URI: unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      session-service:
+        condition: service_healthy
+    networks:
+      - interview-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   # subscription-service: 8083
-  # execution-service: 8086
   # analysis-service:  8087
   # review-service:    8088
   # report-service:    8089
