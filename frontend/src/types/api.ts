@@ -149,6 +149,37 @@ export interface SessionEvent {
   createdAt: string;
 }
 
+// ─── Code execution ────────────────────────────────────────────────
+export type ExecutionStatus =
+  | "PENDING"
+  | "RUNNING"
+  | "SUCCESS"
+  | "FAILURE"
+  | "TIMEOUT"
+  | "ERROR";
+
+export interface CodeExecution {
+  id: string;
+  sessionId: string;
+  userId: string;
+  language: string;
+  status: ExecutionStatus;
+  stdout: string | null;
+  stderr: string | null;
+  exitCode: number | null;
+  durationMs: number | null;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExecutionRequest {
+  sessionId: string;
+  language: string;
+  code: string;
+  stdin?: string;
+}
+
 // ─── User lookup (for selecting participants) ──────────────────────
 export interface UserLookup {
   id: string;
