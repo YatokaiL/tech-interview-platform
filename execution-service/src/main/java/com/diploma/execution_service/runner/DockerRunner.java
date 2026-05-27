@@ -4,15 +4,16 @@ import com.diploma.execution_service.entity.ExecutionStatus;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.api.model.StreamType;
+import com.github.dockerjava.api.command.WaitContainerResultCallback;
 import com.github.dockerjava.core.command.LogContainerResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
-import com.github.dockerjava.core.command.WaitContainerResultCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -93,9 +94,10 @@ public class DockerRunner {
             docker.startContainerCmd(containerId).exec();
 
             WaitContainerResultCallback waitCb = docker.waitContainerCmd(containerId).start();
-            boolean finished = waitCb.awaitCompletion(timeout.toMillis(), TimeUnit.MILLISECONDS);
-
-            if (!finished) {
+            Integer exitCode;
+            try {
+                exitCode = waitCb.awaitStatusCode(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            } catch (DockerClientException timedOut) {
                 forceKill(containerId);
                 StreamCapture partial = collectLogs(containerId);
                 long dur = (System.nanoTime() - startNs) / 1_000_000L;
@@ -103,7 +105,6 @@ public class DockerRunner {
                         "Execution exceeded " + timeout.toMillis() + " ms and was terminated");
             }
 
-            Integer exitCode = waitCb.awaitStatusCode();
             StreamCapture cap = collectLogs(containerId);
             long durationMs = (System.nanoTime() - startNs) / 1_000_000L;
             int code1 = exitCode == null ? -1 : exitCode;
