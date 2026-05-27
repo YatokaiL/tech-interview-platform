@@ -75,7 +75,9 @@ public class DockerRunner {
                     .withCapDrop(Capability.ALL)
                     .withSecurityOpts(java.util.List.of("no-new-privileges"));
 
-            String runCmd = profile.runCommand();
+            RunPlan plan = planRun(profile, code);
+
+            String runCmd = plan.runCommand();
             if (stdin != null && !stdin.isEmpty()) runCmd += " < /sandbox/stdin";
 
             CreateContainerResponse created = docker.createContainerCmd(profile.image())
@@ -89,7 +91,7 @@ public class DockerRunner {
                     .exec();
             containerId = created.getId();
 
-            copyCodeInto(containerId, profile.fileName(), code, stdin);
+            copyCodeInto(containerId, plan.fileName(), code, stdin);
 
             docker.startContainerCmd(containerId).exec();
 
@@ -120,6 +122,29 @@ public class DockerRunner {
                 removeQuiet(containerId);
             }
         }
+    }
+
+    private record RunPlan(String fileName, String runCommand) {}
+
+    private static final java.util.regex.Pattern JAVA_PUBLIC_CLASS =
+            java.util.regex.Pattern.compile("(?m)public\\s+(?:final\\s+|abstract\\s+)?class\\s+([A-Za-z_$][A-Za-z0-9_$]*)");
+    private static final java.util.regex.Pattern JAVA_ANY_CLASS =
+            java.util.regex.Pattern.compile("(?m)\\bclass\\s+([A-Za-z_$][A-Za-z0-9_$]*)");
+
+    private RunPlan planRun(LanguageProfile profile, String code) {
+        if ("java".equals(profile.key())) {
+            String className = "Main";
+            java.util.regex.Matcher pub = JAVA_PUBLIC_CLASS.matcher(code);
+            if (pub.find()) {
+                className = pub.group(1);
+            } else {
+                java.util.regex.Matcher any = JAVA_ANY_CLASS.matcher(code);
+                if (any.find()) className = any.group(1);
+            }
+            String runCmd = "javac /sandbox/" + className + ".java -d /sandbox && cd /sandbox && java " + className;
+            return new RunPlan(className + ".java", runCmd);
+        }
+        return new RunPlan(profile.fileName(), profile.runCommand());
     }
 
     private void ensureImage(String image) throws InterruptedException {

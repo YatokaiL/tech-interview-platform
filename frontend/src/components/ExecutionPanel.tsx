@@ -21,8 +21,8 @@ interface ExecutionPanelProps {
   canRun: boolean;
 }
 
-const POLL_INTERVAL_MS = 1000;
-const POLL_MAX_ATTEMPTS = 60; // ~1 minute hard ceiling
+const POLL_INTERVAL_MS = 1500;
+const POLL_MAX_ATTEMPTS = 240; // ~6 minutes — enough for the first-run Docker image pull
 
 const STATUS_LABEL: Record<ExecutionStatus, string> = {
   PENDING: "В очереди",
@@ -83,7 +83,9 @@ export function ExecutionPanel({ sessionId, language, getCode, canRun }: Executi
         }
         if (attempt >= POLL_MAX_ATTEMPTS) {
           clearPoll();
-          toast.error("Превышено время ожидания результата");
+          toast.error(
+            "Превышено время ожидания. Скорее всего тянется образ контейнера для языка — попробуй обновить страницу через минуту."
+          );
           return;
         }
         pollTimer.current = window.setTimeout(() => pollOnce(id, attempt + 1), POLL_INTERVAL_MS);
