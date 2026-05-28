@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
@@ -66,7 +68,18 @@ public class ExecutionService {
         exec = repository.save(exec);
 
         final UUID id = exec.getId();
-        executionExecutor.submit(() -> processInBackground(id, profile));
+        // Background run must start only after this @Transactional method commits — otherwise
+        // the worker would race the commit and not see the new row.
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    executionExecutor.submit(() -> processInBackground(id, profile));
+                }
+            });
+        } else {
+            executionExecutor.submit(() -> processInBackground(id, profile));
+        }
         return exec;
     }
 

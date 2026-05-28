@@ -308,6 +308,7 @@ services:
       SESSION_SERVICE_URI: http://session-service:8084
       JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
       DOCKER_HOST_URI: unix:///var/run/docker.sock
+      DOCKER_PULL_ON_STARTUP: "true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
