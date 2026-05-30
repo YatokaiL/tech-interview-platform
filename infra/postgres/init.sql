@@ -11,6 +11,7 @@
 CREATE SCHEMA IF NOT EXISTS auth_service;
 CREATE SCHEMA IF NOT EXISTS subscription_service;
 CREATE SCHEMA IF NOT EXISTS session_service;
+CREATE SCHEMA IF NOT EXISTS execution_service;
 CREATE SCHEMA IF NOT EXISTS review_service;
 CREATE SCHEMA IF NOT EXISTS report_service;
 CREATE SCHEMA IF NOT EXISTS notification_service;

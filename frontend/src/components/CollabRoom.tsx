@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ExecutionPanel } from "@/components/ExecutionPanel";
 
 type ConnState = "idle" | "connecting" | "open" | "closed" | "error";
 
@@ -302,6 +303,7 @@ export const CollabRoom = forwardRef<CollabRoomHandle, CollabRoomProps>(function
   const readOnly = !canEdit;
 
   return (
+    <div className="space-y-4">
     <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
       <Card className="overflow-hidden">
         <CardHeader className="flex-row items-center justify-between space-y-0 gap-3 py-3">
@@ -423,6 +425,14 @@ export const CollabRoom = forwardRef<CollabRoomHandle, CollabRoomProps>(function
           )}
         </Card>
       </div>
+    </div>
+
+      <ExecutionPanel
+        sessionId={session.id}
+        language={language}
+        getCode={() => codeRef.current}
+        canRun={canEdit}
+      />
     </div>
   );
 });
