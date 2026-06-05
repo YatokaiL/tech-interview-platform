@@ -57,6 +57,11 @@ spring:
               predicates:
                 - Path=/api/executions/**
 
+            - id: analysis-service
+              uri: ${ANALYSIS_SERVICE_URI:http://analysis-service:8087}
+              predicates:
+                - Path=/api/analyses/**
+
 server:
   port: ${SERVER_PORT:8080}
 
