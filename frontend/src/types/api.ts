@@ -180,6 +180,40 @@ export interface ExecutionRequest {
   stdin?: string;
 }
 
+// ─── Code analysis ─────────────────────────────────────────────────
+export type AnalysisStatus = "PENDING" | "RUNNING" | "COMPLETED" | "ERROR";
+
+export interface AnalysisIssue {
+  tool: string;
+  severity: string;
+  line: number | null;
+  rule: string | null;
+  message: string;
+}
+
+export interface CodeAnalysis {
+  id: string;
+  sessionId: string;
+  userId: string;
+  language: string;
+  status: AnalysisStatus;
+  linesOfCode: number | null;
+  cyclomaticComplexity: number | null;
+  cognitiveComplexity: number | null;
+  methodCount: number | null;
+  issues: AnalysisIssue[] | null;
+  durationMs: number | null;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AnalysisRequest {
+  sessionId: string;
+  language: string;
+  code: string;
+}
+
 // ─── User lookup (for selecting participants) ──────────────────────
 export interface UserLookup {
   id: string;

@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ExecutionPanel } from "@/components/ExecutionPanel";
+import { AnalysisPanel } from "@/components/AnalysisPanel";
 
 type ConnState = "idle" | "connecting" | "open" | "closed" | "error";
 
@@ -427,12 +428,20 @@ export const CollabRoom = forwardRef<CollabRoomHandle, CollabRoomProps>(function
       </div>
     </div>
 
-      <ExecutionPanel
-        sessionId={session.id}
-        language={language}
-        getCode={() => codeRef.current}
-        canRun={canEdit}
-      />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ExecutionPanel
+          sessionId={session.id}
+          language={language}
+          getCode={() => codeRef.current}
+          canRun={canEdit}
+        />
+        <AnalysisPanel
+          sessionId={session.id}
+          language={language}
+          getCode={() => codeRef.current}
+          canAnalyze={canEdit}
+        />
+      </div>
     </div>
   );
 });
