@@ -181,18 +181,26 @@ export const CollabRoom = forwardRef<CollabRoomHandle, CollabRoomProps>(function
         return;
       }
       switch (msg.type) {
-        case "init":
-          remoteUpdateRef.current = true;
-          setCode(msg.code ?? "");
+        case "init": {
+          const incoming = msg.code ?? "";
+          if (incoming !== codeRef.current) {
+            remoteUpdateRef.current = true;
+            setCode(incoming);
+          }
           if (msg.language) setLanguage(msg.language);
           setParticipants(msg.participants ?? []);
           break;
-        case "edit":
+        }
+        case "edit": {
           if (msg.by.userId === user?.id) break;
-          remoteUpdateRef.current = true;
-          setCode(msg.code ?? "");
+          const incoming = msg.code ?? "";
+          if (incoming !== codeRef.current) {
+            remoteUpdateRef.current = true;
+            setCode(incoming);
+          }
           if (msg.language) setLanguage(msg.language);
           break;
+        }
         case "chat":
           pushChat({ by: msg.by, text: msg.text, at: msg.at });
           break;

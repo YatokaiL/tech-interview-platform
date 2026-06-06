@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
@@ -24,12 +25,19 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CollabWebSocketHandler extends TextWebSocketHandler {
 
+    private static final int OUTGOING_TEXT_LIMIT = 1_048_576;     // 1 MB per outgoing frame
+    private static final int CONCURRENT_BUFFER_BYTES = 4_194_304; // 4 MB queued backlog per peer
+    private static final int CONCURRENT_SEND_TIME_MS = 10_000;
+
     private final RoomRegistry registry;
     private final ObjectMapper mapper;
     private final SessionClient sessionClient;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        // Raise the per-session incoming text frame size — Java sources blow past Spring's 8 KB default.
+        session.setTextMessageSizeLimit(OUTGOING_TEXT_LIMIT);
+
         JwtPrincipal principal = (JwtPrincipal) session.getAttributes().get(HandshakeAttrs.PRINCIPAL);
         UUID sessionId = (UUID) session.getAttributes().get(HandshakeAttrs.SESSION_ID);
         SessionClient.SessionInfo info = (SessionClient.SessionInfo) session.getAttributes().get(HandshakeAttrs.SESSION_INFO);
@@ -42,12 +50,14 @@ public class CollabWebSocketHandler extends TextWebSocketHandler {
             room = registry.getOrCreate(sessionId, info.getLanguage(), initialCode);
         }
 
-        Room.Participant me = room.addParticipant(session, principal);
+        // Wrap session so concurrent broadcasts to the same peer don't corrupt frames (1002 errors).
+        WebSocketSession safe = new ConcurrentWebSocketSessionDecorator(session, CONCURRENT_SEND_TIME_MS, CONCURRENT_BUFFER_BYTES);
+        Room.Participant me = room.addParticipant(safe, principal);
         log.info("WS connect session={} user={} role={} roomSize={}",
                 sessionId, principal.email(), principal.role(), room.size());
 
-        sendInit(session, room, me);
-        broadcastExcept(room, session, "participant-joined", buildPresence(principal));
+        sendInit(safe, room, me);
+        broadcastExcept(room, safe, "participant-joined", buildPresence(principal));
     }
 
     @Override
@@ -58,6 +68,10 @@ public class CollabWebSocketHandler extends TextWebSocketHandler {
             close(session, CloseStatus.SERVER_ERROR.withReason("Room not found"));
             return;
         }
+        // The participant was added with a decorated session; look it up by id so the sender filter works.
+        WebSocketSession senderInRoom = room.findBySessionId(session.getId());
+        WebSocketSession sender = senderInRoom != null ? senderInRoom : session;
+
         JwtPrincipal principal = (JwtPrincipal) session.getAttributes().get(HandshakeAttrs.PRINCIPAL);
 
         JsonNode payload;
@@ -70,8 +84,8 @@ public class CollabWebSocketHandler extends TextWebSocketHandler {
 
         String type = payload.path("type").asText();
         switch (type) {
-            case "edit" -> handleEdit(room, session, principal, payload);
-            case "cursor" -> handleCursor(room, session, principal, payload);
+            case "edit" -> handleEdit(room, sender, principal, payload);
+            case "cursor" -> handleCursor(room, sender, principal, payload);
             case "chat" -> handleChat(room, principal, payload);
             case "ping" -> { /* keep-alive, ignore */ }
             default -> sendError(session, "Unknown message type: " + type);
@@ -183,8 +197,9 @@ public class CollabWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         TextMessage msg = new TextMessage(text);
+        String senderId = sender.getId();
         for (Room.Participant p : room.participants()) {
-            if (p.session() == sender) continue;
+            if (p.session().getId().equals(senderId)) continue;
             sendQuiet(p.session(), msg);
         }
     }
@@ -207,8 +222,8 @@ public class CollabWebSocketHandler extends TextWebSocketHandler {
         if (!session.isOpen()) return;
         try {
             session.sendMessage(msg);
-        } catch (IOException e) {
-            log.debug("Failed to send WS message to {}: {}", session.getId(), e.getMessage());
+        } catch (Exception e) {
+            log.warn("Failed to send WS message to {}: {}", session.getId(), e.toString());
         }
     }
 

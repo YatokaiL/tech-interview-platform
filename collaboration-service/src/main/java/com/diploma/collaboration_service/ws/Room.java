@@ -45,6 +45,11 @@ public class Room {
         return participants.remove(wsSessionId);
     }
 
+    public WebSocketSession findBySessionId(String wsSessionId) {
+        Participant p = participants.get(wsSessionId);
+        return p == null ? null : p.session();
+    }
+
     public Collection<Participant> participants() {
         return participants.values();
     }
