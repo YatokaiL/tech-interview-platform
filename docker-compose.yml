@@ -383,6 +383,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SESSION_SERVICE_URI: http://session-service:8084
+      EXECUTION_SERVICE_URI: http://execution-service:8086
+      ANALYSIS_SERVICE_URI: http://analysis-service:8087
       JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
     depends_on:
       postgres:

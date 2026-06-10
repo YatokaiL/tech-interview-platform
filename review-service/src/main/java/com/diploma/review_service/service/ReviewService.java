@@ -1,5 +1,7 @@
 package com.diploma.review_service.service;
 
+import com.diploma.review_service.client.AnalysisClient;
+import com.diploma.review_service.client.ExecutionClient;
 import com.diploma.review_service.client.SessionAccessClient;
 import com.diploma.review_service.dto.CommentRequest;
 import com.diploma.review_service.dto.CommentResponse;
@@ -36,6 +38,9 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ReviewCommentRepository commentRepository;
     private final SessionAccessClient sessionAccessClient;
+    private final ExecutionClient executionClient;
+    private final AnalysisClient analysisClient;
+    private final AutoReviewService autoReviewService;
     private final ReviewEventPublisher eventPublisher;
 
     // ---------- READ ----------
@@ -115,6 +120,64 @@ public class ReviewService {
 
         review = reviewRepository.save(review);
         return ReviewResponse.from(review, List.of());
+    }
+
+    @Transactional
+    public ReviewResponse generateAuto(UUID sessionId) {
+        String token = CurrentUser.rawToken();
+
+        SessionAccessClient.SessionInfo info = sessionAccessClient.fetchAccessible(sessionId, token);
+        if (info == null) throw new ForbiddenException("Session is not accessible to current user");
+        if (!"COMPLETED".equals(info.getStatus())) {
+            throw new ValidationException("Auto-review is available only for COMPLETED sessions");
+        }
+        ensureIsInterviewerOf(info);
+
+        SessionAccessClient.SnapshotInfo snapshot = sessionAccessClient.fetchLatestSnapshot(sessionId, token);
+        SessionAccessClient.TaskInfo task = sessionAccessClient.fetchTask(info.getTaskId(), token);
+        ExecutionClient.ExecutionInfo execution = executionClient.fetchLatest(sessionId, token);
+        AnalysisClient.AnalysisInfo analysis = analysisClient.fetchLatest(sessionId, token);
+
+        AutoReviewService.AutoProposal proposal = autoReviewService.generate(info, snapshot, task, execution, analysis);
+        log.info("Auto-review proposal for session {}: {}", sessionId, proposal);
+
+        Review review = reviewRepository.findBySessionId(sessionId).orElseGet(() -> {
+            Review r = new Review();
+            r.setSessionId(sessionId);
+            r.setReviewerId(CurrentUser.id());
+            r.setCandidateId(info.getCandidateId());
+            r.setCompanyId(info.getCompanyId());
+            r.setStatus(ReviewStatus.DRAFT);
+            return r;
+        });
+        if (review.getStatus() == ReviewStatus.SUBMITTED) {
+            throw new ValidationException("Submitted reviews cannot be regenerated");
+        }
+
+        review.setScoreCorrectness(proposal.scoreCorrectness());
+        review.setScoreCodeQuality(proposal.scoreCodeQuality());
+        review.setScorePerformance(proposal.scorePerformance());
+        review.setScoreCommunication(proposal.scoreCommunication());
+        review.setVerdict(proposal.verdict());
+        review.setSummary(proposal.summary());
+        review = reviewRepository.save(review);
+
+        // Refresh comments: drop existing auto-comments (entire list is overwritten on re-generate).
+        commentRepository.deleteAll(commentRepository.findByReviewIdOrderByCreatedAtAsc(review.getId()));
+        UUID authorId = CurrentUser.id();
+        UUID reviewId = review.getId();
+        List<ReviewComment> persisted = new java.util.ArrayList<>();
+        for (CommentRequest cr : proposal.comments()) {
+            ReviewComment c = new ReviewComment();
+            c.setReviewId(reviewId);
+            c.setLineNumber(cr.lineNumber());
+            c.setText(cr.text());
+            c.setAuthorId(authorId);
+            persisted.add(c);
+        }
+        commentRepository.saveAll(persisted);
+
+        return ReviewResponse.from(review, loadCommentResponses(review.getId()));
     }
 
     @Transactional

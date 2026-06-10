@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   MessageSquarePlus,
   ArrowLeft,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
@@ -109,6 +110,18 @@ export function SessionReviewPage() {
     onError: (err) => toast.error(errorMessage(err, "Не удалось создать ревью")),
   });
 
+  const autoGenerateMutation = useMutation({
+    mutationFn: async () => {
+      if (!sessionId) throw new Error("no sessionId");
+      return (await api.post<Review>(`/reviews/auto`, null, { params: { sessionId } })).data;
+    },
+    onSuccess: () => {
+      toast.success("Черновик сгенерирован автоматически");
+      queryClient.invalidateQueries({ queryKey: ["review-by-session", sessionId] });
+    },
+    onError: (err) => toast.error(errorMessage(err, "Не удалось сгенерировать ревью")),
+  });
+
   if (sessionLoading || reviewLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -144,13 +157,27 @@ export function SessionReviewPage() {
               </p>
             </div>
             {(isInterviewer || isAdmin) && (
-              <Button
-                onClick={() => createMutation.mutate()}
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                Создать черновик
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => createMutation.mutate()}
+                  disabled={createMutation.isPending || autoGenerateMutation.isPending}
+                >
+                  {createMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Пустой черновик
+                </Button>
+                <Button
+                  onClick={() => autoGenerateMutation.mutate()}
+                  disabled={createMutation.isPending || autoGenerateMutation.isPending}
+                >
+                  {autoGenerateMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  Оценить автоматически
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -169,7 +196,13 @@ export function SessionReviewPage() {
           canEdit={!!canEdit}
           onChanged={refetchReview}
         />
-        <ReviewRubricPane review={review} canEdit={!!canEdit} onChanged={refetchReview} />
+        <ReviewRubricPane
+          review={review}
+          canEdit={!!canEdit}
+          onChanged={refetchReview}
+          onAutoGenerate={() => autoGenerateMutation.mutate()}
+          autoGenerating={autoGenerateMutation.isPending}
+        />
       </div>
     </div>
   );
@@ -347,10 +380,14 @@ function ReviewRubricPane({
   review,
   canEdit,
   onChanged,
+  onAutoGenerate,
+  autoGenerating,
 }: {
   review: Review;
   canEdit: boolean;
   onChanged: () => void;
+  onAutoGenerate: () => void;
+  autoGenerating: boolean;
 }) {
   const queryClient = useQueryClient();
   const [scores, setScores] = useState({
@@ -423,6 +460,23 @@ function ReviewRubricPane({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {canEdit && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={onAutoGenerate}
+            disabled={autoGenerating}
+          >
+            {autoGenerating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            Перегенерировать автоматически
+          </Button>
+        )}
+
         <div className="space-y-3">
           {CRITERIA.map((c) => (
             <div key={c.key} className="space-y-1.5">

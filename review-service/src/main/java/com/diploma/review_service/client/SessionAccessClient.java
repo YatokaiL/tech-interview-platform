@@ -35,6 +35,35 @@ public class SessionAccessClient {
         }
     }
 
+    public SnapshotInfo fetchLatestSnapshot(UUID sessionId, String bearerToken) {
+        try {
+            return http.get()
+                    .uri("/api/sessions/{id}/snapshots/latest", sessionId)
+                    .header("Authorization", "Bearer " + bearerToken)
+                    .retrieve()
+                    .body(SnapshotInfo.class);
+        } catch (HttpStatusCodeException e) {
+            int code = e.getStatusCode().value();
+            if (code == 204 || code == 404) return null;
+            log.debug("Failed to fetch snapshot for {}: {}", sessionId, code);
+            return null;
+        }
+    }
+
+    public TaskInfo fetchTask(UUID taskId, String bearerToken) {
+        if (taskId == null) return null;
+        try {
+            return http.get()
+                    .uri("/api/tasks/{id}", taskId)
+                    .header("Authorization", "Bearer " + bearerToken)
+                    .retrieve()
+                    .body(TaskInfo.class);
+        } catch (HttpStatusCodeException e) {
+            log.debug("Failed to fetch task {}: {}", taskId, e.getStatusCode());
+            return null;
+        }
+    }
+
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SessionInfo {
@@ -42,7 +71,28 @@ public class SessionAccessClient {
         private UUID companyId;
         private UUID interviewerId;
         private UUID candidateId;
+        private UUID taskId;
+        private String taskTitle;
         private String language;
         private String status;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SnapshotInfo {
+        private UUID id;
+        private UUID sessionId;
+        private String language;
+        private String code;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class TaskInfo {
+        private UUID id;
+        private String title;
+        private String language;
+        private String expectedOutput;
+        private Integer timeLimitMinutes;
     }
 }

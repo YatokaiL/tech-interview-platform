@@ -38,6 +38,12 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
+    @PostMapping("/auto")
+    @PreAuthorize("hasAnyRole('INTERVIEWER', 'ADMIN')")
+    public ResponseEntity<ReviewResponse> generateAuto(@RequestParam UUID sessionId) {
+        return ResponseEntity.ok(reviewService.generateAuto(sessionId));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ReviewResponse> getOne(@PathVariable UUID id) {
         return ResponseEntity.ok(reviewService.getById(id));
