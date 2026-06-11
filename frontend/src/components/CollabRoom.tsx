@@ -63,6 +63,8 @@ export const CollabRoom = forwardRef<CollabRoomHandle, CollabRoomProps>(function
       user?.id === session.candidateId);
 
   const isOpenSession = session.status === "SCHEDULED" || session.status === "IN_PROGRESS";
+  const isCandidate = user?.role === "CANDIDATE";
+  const analysisVisible = !isCandidate; // static analysis is for the interviewing side only
 
   const [code, setCode] = useState<string>("");
   const [language, setLanguage] = useState<string>(session.language);
@@ -436,19 +438,21 @@ export const CollabRoom = forwardRef<CollabRoomHandle, CollabRoomProps>(function
       </div>
     </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className={analysisVisible ? "grid gap-4 lg:grid-cols-2" : ""}>
         <ExecutionPanel
           sessionId={session.id}
           language={language}
           getCode={() => codeRef.current}
           canRun={canEdit}
         />
-        <AnalysisPanel
-          sessionId={session.id}
-          language={language}
-          getCode={() => codeRef.current}
-          canAnalyze={canEdit}
-        />
+        {analysisVisible && (
+          <AnalysisPanel
+            sessionId={session.id}
+            language={language}
+            getCode={() => codeRef.current}
+            canAnalyze={canEdit && !isCandidate}
+          />
+        )}
       </div>
     </div>
   );

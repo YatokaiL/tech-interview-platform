@@ -13,6 +13,7 @@ import java.util.List;
 public class JavaAnalyzer implements Analyzer {
 
     private final JavaMetricsCalculator metrics;
+    private final BigOEstimator bigOEstimator;
     private final CheckstyleRunner checkstyle;
     private final PmdRunner pmd;
 
@@ -37,11 +38,14 @@ public class JavaAnalyzer implements Analyzer {
             issues = new ArrayList<>(issues.subList(0, maxIssues));
         }
 
+        String bigO = bigOEstimator.estimate(code);
+
         return new AnalysisResult(
                 loc,
                 m.cyclomatic() > 0 ? m.cyclomatic() : null,
                 m.cognitive() > 0 ? m.cognitive() : null,
                 m.methodCount() > 0 ? m.methodCount() : null,
+                bigO,
                 issues
         );
     }

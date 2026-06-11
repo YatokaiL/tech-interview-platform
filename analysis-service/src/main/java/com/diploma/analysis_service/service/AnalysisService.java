@@ -137,6 +137,7 @@ public class AnalysisService {
                 a.setCyclomaticComplexity(finalResult.cyclomaticComplexity());
                 a.setCognitiveComplexity(finalResult.cognitiveComplexity());
                 a.setMethodCount(finalResult.methodCount());
+                a.setTimeComplexity(finalResult.timeComplexity());
                 a.setIssues(objectMapper.valueToTree(finalResult.issues()));
             } else {
                 a.setStatus(AnalysisStatus.ERROR);

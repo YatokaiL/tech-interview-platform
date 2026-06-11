@@ -193,6 +193,9 @@ public class AutoReviewService {
         if (analysis != null && analysis.getCyclomaticComplexity() != null) {
             sb.append("цикломатическая сложность ").append(analysis.getCyclomaticComplexity());
             if (analysis.getCognitiveComplexity() != null) sb.append(", когнитивная ").append(analysis.getCognitiveComplexity());
+            if (analysis.getTimeComplexity() != null && !analysis.getTimeComplexity().isBlank()) {
+                sb.append(", оценка алгоритмической сложности — ").append(analysis.getTimeComplexity());
+            }
             sb.append(".");
         } else {
             sb.append("нет данных по сложности.");

@@ -51,6 +51,7 @@ public class AnalysisClient {
         private Integer cyclomaticComplexity;
         private Integer cognitiveComplexity;
         private Integer methodCount;
+        private String timeComplexity;
         private JsonNode issues;
         private String errorMessage;
     }

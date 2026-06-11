@@ -201,6 +201,7 @@ export interface CodeAnalysis {
   cyclomaticComplexity: number | null;
   cognitiveComplexity: number | null;
   methodCount: number | null;
+  timeComplexity: string | null;
   issues: AnalysisIssue[] | null;
   durationMs: number | null;
   errorMessage: string | null;
