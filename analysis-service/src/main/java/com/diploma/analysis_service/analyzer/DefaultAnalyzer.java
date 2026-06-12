@@ -19,7 +19,7 @@ public class DefaultAnalyzer implements Analyzer {
     @Override
     public AnalysisResult analyze(String code) {
         int loc = countNonBlankLines(code);
-        return new AnalysisResult(loc, null, null, null, List.of());
+        return new AnalysisResult(loc, null, null, null, null, List.of());
     }
 
     static int countNonBlankLines(String code) {

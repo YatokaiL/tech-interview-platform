@@ -9,5 +9,6 @@ public record AnalysisResult(
         Integer cyclomaticComplexity,
         Integer cognitiveComplexity,
         Integer methodCount,
+        String timeComplexity,
         List<AnalysisIssue> issues
 ) {}

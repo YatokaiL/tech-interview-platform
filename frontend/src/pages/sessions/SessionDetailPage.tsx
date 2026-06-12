@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, CheckCircle2, Loader2, Play, Trash2 } from "lucide-react";
+import { Ban, CheckCircle2, ClipboardCheck, Loader2, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import { api } from "@/lib/api";
@@ -117,8 +117,15 @@ export function SessionDetailPage() {
             )}
           </div>
         </div>
-        {canManage && (
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
+          {session.status === "COMPLETED" && (
+            <Button variant="outline" onClick={() => navigate(`/sessions/${session.id}/review`)}>
+              <ClipboardCheck className="h-4 w-4" />
+              К ревью
+            </Button>
+          )}
+          {canManage && (
+            <>
             {(isInterviewer || isAdmin) && session.status === "SCHEDULED" && (
               <Button onClick={() => startMutation.mutate()} disabled={startMutation.isPending}>
                 <Play className="h-4 w-4" />
@@ -154,8 +161,9 @@ export function SessionDetailPage() {
               <Trash2 className="h-4 w-4" />
               Удалить
             </Button>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {showCollab && <CollabRoom ref={collabRef} session={session} />}

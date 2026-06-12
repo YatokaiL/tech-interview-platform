@@ -201,6 +201,7 @@ export interface CodeAnalysis {
   cyclomaticComplexity: number | null;
   cognitiveComplexity: number | null;
   methodCount: number | null;
+  timeComplexity: string | null;
   issues: AnalysisIssue[] | null;
   durationMs: number | null;
   errorMessage: string | null;
@@ -212,6 +213,63 @@ export interface AnalysisRequest {
   sessionId: string;
   language: string;
   code: string;
+}
+
+// ─── Review ────────────────────────────────────────────────────────
+export type ReviewStatus = "DRAFT" | "SUBMITTED";
+export type Verdict = "HIRE" | "NO_HIRE" | "MAYBE";
+
+export interface ReviewComment {
+  id: string;
+  reviewId: string;
+  authorId: string;
+  lineNumber: number | null;
+  text: string;
+  createdAt: string;
+}
+
+export interface Review {
+  id: string;
+  sessionId: string;
+  reviewerId: string;
+  candidateId: string | null;
+  companyId: string;
+  scoreCorrectness: number | null;
+  scoreCodeQuality: number | null;
+  scorePerformance: number | null;
+  scoreCommunication: number | null;
+  scoreAverage: number | null;
+  verdict: Verdict | null;
+  summary: string | null;
+  status: ReviewStatus;
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  comments: ReviewComment[];
+}
+
+export interface ReviewRequest {
+  sessionId: string;
+  scoreCorrectness?: number | null;
+  scoreCodeQuality?: number | null;
+  scorePerformance?: number | null;
+  scoreCommunication?: number | null;
+  verdict?: Verdict | null;
+  summary?: string | null;
+}
+
+export interface ReviewUpdateRequest {
+  scoreCorrectness?: number | null;
+  scoreCodeQuality?: number | null;
+  scorePerformance?: number | null;
+  scoreCommunication?: number | null;
+  verdict?: Verdict | null;
+  summary?: string | null;
+}
+
+export interface CommentRequest {
+  lineNumber?: number | null;
+  text: string;
 }
 
 // ─── User lookup (for selecting participants) ──────────────────────

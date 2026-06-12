@@ -46,6 +46,21 @@ export const LANGUAGE_OPTIONS = [
   { value: "cpp", label: "C++" },
 ];
 
+export const VERDICT_LABELS: Record<"HIRE" | "NO_HIRE" | "MAYBE", string> = {
+  HIRE: "Нанимать",
+  NO_HIRE: "Не нанимать",
+  MAYBE: "Сомневаюсь",
+};
+
+export const VERDICT_VARIANT: Record<
+  "HIRE" | "NO_HIRE" | "MAYBE",
+  "default" | "secondary" | "destructive"
+> = {
+  HIRE: "default",
+  NO_HIRE: "destructive",
+  MAYBE: "secondary",
+};
+
 export function monacoLanguage(lang: string | null | undefined): string {
   switch ((lang || "").toLowerCase()) {
     case "java": return "java";

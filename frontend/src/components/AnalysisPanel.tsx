@@ -156,11 +156,12 @@ export function AnalysisPanel({ sessionId, language, getCode, canAnalyze }: Anal
           </div>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-5">
           <Metric label="Строк кода" value={analysis?.linesOfCode} />
           <Metric label="Методов" value={analysis?.methodCount} />
           <Metric label="Цикл. сложность" value={analysis?.cyclomaticComplexity} />
           <Metric label="Когн. сложность" value={analysis?.cognitiveComplexity} />
+          <Metric label="Big-O" value={analysis?.timeComplexity} />
         </div>
 
         <div>
@@ -190,12 +191,12 @@ export function AnalysisPanel({ sessionId, language, getCode, canAnalyze }: Anal
   );
 }
 
-function Metric({ label, value }: { label: string; value: number | null | undefined }) {
+function Metric({ label, value }: { label: string; value: number | string | null | undefined }) {
   return (
     <div className="rounded-md border p-2">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-lg font-semibold tabular-nums">
-        {value ?? "—"}
+        {value == null || value === "" ? "—" : value}
       </div>
     </div>
   );

@@ -56,6 +56,9 @@ public class CodeAnalysis {
     @Column(name = "method_count")
     private Integer methodCount;
 
+    @Column(name = "time_complexity", length = 50)
+    private String timeComplexity;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private JsonNode issues;

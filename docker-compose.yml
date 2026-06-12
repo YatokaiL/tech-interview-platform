@@ -163,6 +163,7 @@ services:
       COLLABORATION_SERVICE_WS_URI: ws://collaboration-service:8085
       EXECUTION_SERVICE_URI: http://execution-service:8086
       ANALYSIS_SERVICE_URI: http://analysis-service:8087
+      REVIEW_SERVICE_URI: http://review-service:8088
       JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
     depends_on:
       auth-service:
@@ -176,6 +177,8 @@ services:
       execution-service:
         condition: service_started
       analysis-service:
+        condition: service_started
+      review-service:
         condition: service_started
     networks:
       - interview-net
@@ -367,12 +370,43 @@ services:
       retries: 5
       start_period: 60s
 
-  # subscription-service: 8083
-  # review-service:    8088
-  # report-service:    8089
-  # notification-service: 8090
-  # analytics-service: 8091
-  # frontend:          3000
+  review-service:
+    build:
+      context: ./review-service
+    container_name: diploma-review-service
+    ports:
+      - "8088:8088"
+    environment:
+      SERVER_PORT: 8088
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/interview_platform?currentSchema=review_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SESSION_SERVICE_URI: http://session-service:8084
+      EXECUTION_SERVICE_URI: http://execution-service:8086
+      ANALYSIS_SERVICE_URI: http://analysis-service:8087
+      JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      session-service:
+        condition: service_healthy
+    networks:
+      - interview-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Remaining services to wire (not yet implemented):
+  #   subscription-service:  8083
+  #   report-service:        8089
+  #   notification-service:  8090
+  #   analytics-service:     8091
 
 volumes:
   postgres_data:
