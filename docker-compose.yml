@@ -370,6 +370,41 @@ services:
       retries: 5
       start_period: 60s
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: diploma-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - interview-net
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: diploma-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint:
+      - sh
+      - -c
+      - |
+        echo "Pulling ${OLLAMA_MODEL:-qwen2.5-coder:7b} (one-time, ~5 GB)..."
+        ollama pull "${OLLAMA_MODEL:-qwen2.5-coder:7b}"
+        echo "Model ready."
+    networks:
+      - interview-net
+    restart: "no"
+
   review-service:
     build:
       context: ./review-service
@@ -385,6 +420,9 @@ services:
       SESSION_SERVICE_URI: http://session-service:8084
       EXECUTION_SERVICE_URI: http://execution-service:8086
       ANALYSIS_SERVICE_URI: http://analysis-service:8087
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://ollama:11434}
+      LLM_MODEL: ${LLM_MODEL:-qwen2.5-coder:7b}
+      LLM_ENABLED: ${LLM_ENABLED:-true}
       JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
     depends_on:
       postgres:
@@ -413,6 +451,7 @@ volumes:
   redis_data:
   kafka_data:
   minio_data:
+  ollama_data:
 
 networks:
   interview-net:
