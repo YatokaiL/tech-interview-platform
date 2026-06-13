@@ -41,6 +41,7 @@ public class ReviewService {
     private final ExecutionClient executionClient;
     private final AnalysisClient analysisClient;
     private final AutoReviewService autoReviewService;
+    private final LlmReviewProvider llmReviewProvider;
     private final ReviewEventPublisher eventPublisher;
 
     // ---------- READ ----------
@@ -138,7 +139,13 @@ public class ReviewService {
         ExecutionClient.ExecutionInfo execution = executionClient.fetchLatest(sessionId, token);
         AnalysisClient.AnalysisInfo analysis = analysisClient.fetchLatest(sessionId, token);
 
-        AutoReviewService.AutoProposal proposal = autoReviewService.generate(info, snapshot, task, execution, analysis);
+        AutoReviewService.AutoProposal proposal = null;
+        if (llmReviewProvider.isEnabled()) {
+            proposal = llmReviewProvider.tryGenerate(info, snapshot, task, execution, analysis);
+        }
+        if (proposal == null) {
+            proposal = autoReviewService.generate(info, snapshot, task, execution, analysis);
+        }
         log.info("Auto-review proposal for session {}: {}", sessionId, proposal);
 
         Review review = reviewRepository.findBySessionId(sessionId).orElseGet(() -> {

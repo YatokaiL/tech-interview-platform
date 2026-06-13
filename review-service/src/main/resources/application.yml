@@ -52,6 +52,13 @@ app:
     uri: ${EXECUTION_SERVICE_URI:http://localhost:8086}
   analysis-service:
     uri: ${ANALYSIS_SERVICE_URI:http://localhost:8087}
+  llm:
+    enabled: ${LLM_ENABLED:false}
+    base-url: ${LLM_BASE_URL:}
+    model: ${LLM_MODEL:qwen2.5-coder:1.5b}
+    timeout-seconds: ${LLM_TIMEOUT_SECONDS:180}
+    temperature: ${LLM_TEMPERATURE:0.2}
+    max-code-chars: ${LLM_MAX_CODE_CHARS:8000}
 
 management:
   endpoints:
