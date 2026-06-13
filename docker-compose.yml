@@ -398,8 +398,8 @@ services:
       - sh
       - -c
       - |
-        echo "Pulling ${OLLAMA_MODEL:-qwen2.5-coder:7b} (one-time, ~5 GB)..."
-        ollama pull "${OLLAMA_MODEL:-qwen2.5-coder:7b}"
+        echo "Pulling ${OLLAMA_MODEL:-qwen2.5-coder:1.5b} (one-time, ~1 GB)..."
+        ollama pull "${OLLAMA_MODEL:-qwen2.5-coder:1.5b}"
         echo "Model ready."
     networks:
       - interview-net
@@ -421,7 +421,7 @@ services:
       EXECUTION_SERVICE_URI: http://execution-service:8086
       ANALYSIS_SERVICE_URI: http://analysis-service:8087
       LLM_BASE_URL: ${LLM_BASE_URL:-http://ollama:11434}
-      LLM_MODEL: ${LLM_MODEL:-qwen2.5-coder:7b}
+      LLM_MODEL: ${LLM_MODEL:-qwen2.5-coder:1.5b}
       LLM_ENABLED: ${LLM_ENABLED:-true}
       JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
     depends_on:
