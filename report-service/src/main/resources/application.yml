@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: report-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/interview_platform?currentSchema=report_service}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: report_service
+        jdbc:
+          time_zone: UTC
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: report_service
+    liquibase-schema: report_service
+
+server:
+  port: ${SERVER_PORT:8089}
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-me-in-production-min-256-bits-long-string-here-please}
+  session-service:
+    uri: ${SESSION_SERVICE_URI:http://localhost:8084}
+  review-service:
+    uri: ${REVIEW_SERVICE_URI:http://localhost:8088}
+  user-service:
+    uri: ${USER_SERVICE_URI:http://localhost:8082}
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin123}
+    bucket: ${MINIO_BUCKET:reports}
+  report:
+    font-path: ${REPORT_FONT_PATH:/usr/share/fonts/dejavu/DejaVuSans.ttf}
+    font-bold-path: ${REPORT_FONT_BOLD_PATH:/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf}
+    font-mono-path: ${REPORT_FONT_MONO_PATH:/usr/share/fonts/dejavu/DejaVuSansMono.ttf}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    com.diploma: INFO
