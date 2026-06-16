@@ -272,6 +272,24 @@ export interface CommentRequest {
   text: string;
 }
 
+// ─── Reports ───────────────────────────────────────────────────────
+export type ReportFormat = "PDF" | "JSON";
+
+export interface Report {
+  id: string;
+  sessionId: string;
+  reviewId: string | null;
+  format: ReportFormat;
+  sizeBytes: number | null;
+  generatedBy: string;
+  createdAt: string;
+}
+
+export interface ReportRequest {
+  reviewId: string;
+  format: ReportFormat;
+}
+
 // ─── User lookup (for selecting participants) ──────────────────────
 export interface UserLookup {
   id: string;
