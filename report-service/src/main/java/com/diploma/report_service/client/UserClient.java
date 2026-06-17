@@ -24,7 +24,7 @@ public class UserClient {
         if (userId == null) return null;
         try {
             return http.get()
-                    .uri("/api/users/{id}", userId)
+                    .uri("/api/users/{id}/profile", userId)
                     .header("Authorization", "Bearer " + bearerToken)
                     .retrieve()
                     .body(UserInfo.class);
