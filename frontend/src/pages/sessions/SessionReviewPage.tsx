@@ -11,6 +11,9 @@ import {
   MessageSquarePlus,
   ArrowLeft,
   Sparkles,
+  Download,
+  FileText,
+  FileJson,
 } from "lucide-react";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
@@ -20,6 +23,9 @@ import type {
   ApiError,
   CodeSnapshot,
   CommentRequest,
+  Report,
+  ReportFormat,
+  ReportRequest,
   Review,
   ReviewComment,
   ReviewRequest,
@@ -562,7 +568,69 @@ function ReviewRubricPane({
             </Button>
           </div>
         )}
+
+        {submitted && <ReportDownloads reviewId={review.id} />}
       </CardContent>
     </Card>
+  );
+}
+
+function ReportDownloads({ reviewId }: { reviewId: string }) {
+  const [busy, setBusy] = useState<ReportFormat | null>(null);
+
+  const generateAndDownload = useCallback(async (format: ReportFormat) => {
+    setBusy(format);
+    try {
+      const body: ReportRequest = { reviewId, format };
+      const created = await api.post<Report>("/reports", body);
+      const fileRes = await api.get<Blob>(`/reports/${created.data.id}/download`, {
+        responseType: "blob",
+      });
+      const blob = new Blob([fileRes.data], {
+        type: format === "PDF" ? "application/pdf" : "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `interview-report-${created.data.id}.${format.toLowerCase()}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      const msg =
+        isAxiosError<ApiError>(err) && err.response?.data?.message
+          ? err.response.data.message
+          : "Не удалось сформировать отчёт";
+      toast.error(msg);
+    } finally {
+      setBusy(null);
+    }
+  }, [reviewId]);
+
+  return (
+    <div className="space-y-2 border-t pt-3">
+      <div className="text-sm font-medium flex items-center gap-2">
+        <Download className="h-4 w-4" /> Скачать отчёт
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          onClick={() => generateAndDownload("PDF")}
+          disabled={busy !== null}
+        >
+          {busy === "PDF" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+          PDF
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => generateAndDownload("JSON")}
+          disabled={busy !== null}
+        >
+          {busy === "JSON" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileJson className="h-4 w-4" />}
+          JSON
+        </Button>
+      </div>
+    </div>
   );
 }

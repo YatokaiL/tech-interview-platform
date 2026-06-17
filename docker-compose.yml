@@ -164,6 +164,7 @@ services:
       EXECUTION_SERVICE_URI: http://execution-service:8086
       ANALYSIS_SERVICE_URI: http://analysis-service:8087
       REVIEW_SERVICE_URI: http://review-service:8088
+      REPORT_SERVICE_URI: http://report-service:8089
       JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
     depends_on:
       auth-service:
@@ -179,6 +180,8 @@ services:
       analysis-service:
         condition: service_started
       review-service:
+        condition: service_started
+      report-service:
         condition: service_started
     networks:
       - interview-net
@@ -440,9 +443,45 @@ services:
       retries: 5
       start_period: 60s
 
+  report-service:
+    build:
+      context: ./report-service
+    container_name: diploma-report-service
+    ports:
+      - "8089:8089"
+    environment:
+      SERVER_PORT: 8089
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/interview_platform?currentSchema=report_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SESSION_SERVICE_URI: http://session-service:8084
+      REVIEW_SERVICE_URI: http://review-service:8088
+      USER_SERVICE_URI: http://user-service:8082
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MINIO_BUCKET: reports
+      JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      session-service:
+        condition: service_healthy
+      review-service:
+        condition: service_started
+    networks:
+      - interview-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   # Remaining services to wire (not yet implemented):
   #   subscription-service:  8083
-  #   report-service:        8089
   #   notification-service:  8090
   #   analytics-service:     8091
 

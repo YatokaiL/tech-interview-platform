@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CollabRoom, type CollabRoomHandle } from "@/components/CollabRoom";
+import { useUserProfile, userDisplay } from "@/lib/users";
 
 function errorMessage(err: unknown, fallback: string) {
   return isAxiosError<ApiError>(err) && err.response?.data?.message
@@ -168,24 +169,32 @@ export function SessionDetailPage() {
 
       {showCollab && <CollabRoom ref={collabRef} session={session} />}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Параметры сессии</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Row label="Начало" value={new Date(session.scheduledAt).toLocaleString("ru-RU")} />
-          {session.startedAt && (
-            <Row label="Начата" value={new Date(session.startedAt).toLocaleString("ru-RU")} />
-          )}
-          {session.completedAt && (
-            <Row label="Завершена" value={new Date(session.completedAt).toLocaleString("ru-RU")} />
-          )}
-          <Row label="Интервьюер" value={session.interviewerId} mono />
-          <Row label="Кандидат" value={session.candidateId ?? "—"} mono />
-          {session.taskId && <Row label="Задача" value={session.taskId} mono />}
-        </CardContent>
-      </Card>
+      {isAdmin && <SessionParamsCard session={session} />}
     </div>
+  );
+}
+
+function SessionParamsCard({ session }: { session: Session }) {
+  const { data: interviewer } = useUserProfile(session.interviewerId);
+  const { data: candidate } = useUserProfile(session.candidateId);
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Параметры сессии</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Row label="Начало" value={new Date(session.scheduledAt).toLocaleString("ru-RU")} />
+        {session.startedAt && (
+          <Row label="Начата" value={new Date(session.startedAt).toLocaleString("ru-RU")} />
+        )}
+        {session.completedAt && (
+          <Row label="Завершена" value={new Date(session.completedAt).toLocaleString("ru-RU")} />
+        )}
+        <Row label="Интервьюер" value={userDisplay(interviewer, session.interviewerId)} />
+        <Row label="Кандидат" value={userDisplay(candidate, session.candidateId)} />
+        {session.taskTitle && <Row label="Задача" value={session.taskTitle} />}
+      </CardContent>
+    </Card>
   );
 }
 

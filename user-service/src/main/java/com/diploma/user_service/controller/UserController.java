@@ -77,6 +77,11 @@ public class UserController {
         return ResponseEntity.ok(UserResponse.from(userService.getById(id)));
     }
 
+    @GetMapping("/{id}/profile")
+    public ResponseEntity<UserLookupResponse> getPublicProfile(@PathVariable UUID id) {
+        return ResponseEntity.ok(UserLookupResponse.from(userService.getById(id)));
+    }
+
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> update(

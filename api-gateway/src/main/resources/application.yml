@@ -67,6 +67,11 @@ spring:
               predicates:
                 - Path=/api/reviews/**
 
+            - id: report-service
+              uri: ${REPORT_SERVICE_URI:http://report-service:8089}
+              predicates:
+                - Path=/api/reports/**
+
 server:
   port: ${SERVER_PORT:8080}
 
