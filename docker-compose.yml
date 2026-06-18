@@ -171,18 +171,18 @@ services:
         condition: service_healthy
       user-service:
         condition: service_healthy
+      report-service:
+        condition: service_started
+      review-service:
+        condition: service_started
+      analysis-service:
+        condition: service_started
+      execution-service:
+        condition: service_started
       session-service:
         condition: service_healthy
       collaboration-service:
         condition: service_healthy
-      execution-service:
-        condition: service_started
-      analysis-service:
-        condition: service_started
-      review-service:
-        condition: service_started
-      report-service:
-        condition: service_started
     networks:
       - interview-net
     healthcheck:
