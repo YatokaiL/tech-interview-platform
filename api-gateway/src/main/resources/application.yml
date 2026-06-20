@@ -72,6 +72,21 @@ spring:
               predicates:
                 - Path=/api/reports/**
 
+            - id: subscription-service-tariffs
+              uri: ${SUBSCRIPTION_SERVICE_URI:http://subscription-service:8083}
+              predicates:
+                - Path=/api/tariffs/**
+
+            - id: subscription-service-subscriptions
+              uri: ${SUBSCRIPTION_SERVICE_URI:http://subscription-service:8083}
+              predicates:
+                - Path=/api/subscriptions/**
+
+            - id: subscription-service-payments
+              uri: ${SUBSCRIPTION_SERVICE_URI:http://subscription-service:8083}
+              predicates:
+                - Path=/api/payments/**
+
 server:
   port: ${SERVER_PORT:8080}
 

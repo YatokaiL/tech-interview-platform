@@ -165,6 +165,7 @@ services:
       ANALYSIS_SERVICE_URI: http://analysis-service:8087
       REVIEW_SERVICE_URI: http://review-service:8088
       REPORT_SERVICE_URI: http://report-service:8089
+      SUBSCRIPTION_SERVICE_URI: http://subscription-service:8083
       JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
     depends_on:
       auth-service:
@@ -480,8 +481,34 @@ services:
       retries: 5
       start_period: 60s
 
+  subscription-service:
+    build:
+      context: ./subscription-service
+    container_name: diploma-subscription-service
+    ports:
+      - "8083:8083"
+    environment:
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/interview_platform?currentSchema=subscription_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: dev-secret-change-me-in-production-min-256-bits-long-string-here-please
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - interview-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   # Remaining services to wire (not yet implemented):
-  #   subscription-service:  8083
   #   notification-service:  8090
   #   analytics-service:     8091
 

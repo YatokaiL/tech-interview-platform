@@ -24,10 +24,12 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string }[]> = {
     { to: "/admin/users", label: "Пользователи" },
     { to: "/sessions", label: "Сессии" },
     { to: "/tasks", label: "Задачи" },
+    { to: "/subscription", label: "Подписка" },
   ],
   HR_MANAGER: [
     { to: "/sessions", label: "Сессии" },
     { to: "/tasks", label: "Задачи" },
+    { to: "/subscription", label: "Подписка" },
   ],
   INTERVIEWER: [
     { to: "/sessions", label: "Сессии" },
