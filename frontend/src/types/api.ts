@@ -290,6 +290,56 @@ export interface ReportRequest {
   format: ReportFormat;
 }
 
+// ─── Subscriptions ─────────────────────────────────────────────────
+export type SubscriptionStatus = "PENDING" | "ACTIVE" | "EXPIRED" | "CANCELLED";
+export type PaymentStatus = "PENDING" | "SUCCEEDED" | "FAILED" | "REFUNDED";
+
+export interface Tariff {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  currency: string;
+  maxSessionsPerMonth: number | null;
+  features: string[];
+  sortOrder: number;
+  active: boolean;
+}
+
+export interface Payment {
+  id: string;
+  subscriptionId: string;
+  amountCents: number;
+  currency: string;
+  status: PaymentStatus;
+  gatewayRef: string | null;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+export interface Subscription {
+  id: string;
+  companyId: string;
+  tariffId: string;
+  tariff: Tariff | null;
+  status: SubscriptionStatus;
+  periodMonths: number;
+  startedAt: string | null;
+  endsAt: string | null;
+  autoRenew: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  payments: Payment[];
+}
+
+export interface SubscriptionRequest {
+  tariffId: string;
+  periodMonths?: number;
+  autoRenew?: boolean;
+}
+
 // ─── User lookup (for selecting participants) ──────────────────────
 export interface UserLookup {
   id: string;

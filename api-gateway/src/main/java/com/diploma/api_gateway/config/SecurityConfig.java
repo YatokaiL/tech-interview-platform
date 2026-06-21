@@ -33,7 +33,8 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST,
                                 "/api/auth/register",
                                 "/api/auth/login",
-                                "/api/auth/refresh"
+                                "/api/auth/refresh",
+                                "/api/payments/webhook"
                         ).permitAll()
                         .pathMatchers("/actuator/**").permitAll()
                         .pathMatchers("/ws/**").permitAll()

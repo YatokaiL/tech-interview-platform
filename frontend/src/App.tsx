@@ -15,6 +15,7 @@ import { SessionsPage } from "@/pages/sessions/SessionsPage";
 import { SessionFormPage } from "@/pages/sessions/SessionFormPage";
 import { SessionDetailPage } from "@/pages/sessions/SessionDetailPage";
 import { SessionReviewPage } from "@/pages/sessions/SessionReviewPage";
+import { SubscriptionPage } from "@/pages/SubscriptionPage";
 
 export default function App() {
   return (
@@ -45,6 +46,10 @@ export default function App() {
               <Route path="/tasks/:id/edit" element={<TaskFormPage />} />
             </Route>
             <Route path="/tasks/:id" element={<TaskDetailPage />} />
+
+            <Route element={<ProtectedRoute allowedRoles={["HR_MANAGER", "ADMIN"]} />}>
+              <Route path="/subscription" element={<SubscriptionPage />} />
+            </Route>
 
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
               <Route path="/admin" element={<AdminDashboard />} />
