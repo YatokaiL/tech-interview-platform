@@ -8,6 +8,7 @@ public record PaymentReceivedEvent(
         UUID subscriptionId,
         UUID companyId,
         UUID tariffId,
+        UUID createdBy,
         Integer amountCents,
         String currency,
         Instant paidAt
