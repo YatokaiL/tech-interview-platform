@@ -340,6 +340,17 @@ export interface SubscriptionRequest {
   autoRenew?: boolean;
 }
 
+// ─── Notifications ─────────────────────────────────────────────────
+export interface AppNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  link: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
 // ─── User lookup (for selecting participants) ──────────────────────
 export interface UserLookup {
   id: string;
