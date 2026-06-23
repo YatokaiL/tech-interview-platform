@@ -144,6 +144,7 @@ public class SubscriptionService {
                     sub.getId(),
                     sub.getCompanyId(),
                     tariff.getId(),
+                    sub.getCreatedBy(),
                     payment.getAmountCents(),
                     payment.getCurrency(),
                     now

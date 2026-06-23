@@ -87,6 +87,11 @@ spring:
               predicates:
                 - Path=/api/payments/**
 
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URI:http://notification-service:8090}
+              predicates:
+                - Path=/api/notifications/**
+
 server:
   port: ${SERVER_PORT:8080}
 

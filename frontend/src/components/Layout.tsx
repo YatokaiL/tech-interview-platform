@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/NotificationBell";
 import { cn } from "@/lib/utils";
 
 const NAV_BY_ROLE: Record<string, { to: string; label: string }[]> = {
@@ -87,6 +88,8 @@ export function Layout() {
           </div>
 
           {user && (
+            <div className="flex items-center gap-1">
+            <NotificationBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="px-2 gap-2">
@@ -114,6 +117,7 @@ export function Layout() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           )}
         </div>
       </header>
