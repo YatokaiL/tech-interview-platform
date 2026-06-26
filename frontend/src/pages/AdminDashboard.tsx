@@ -11,18 +11,18 @@ const TILES = [
     enabled: true,
   },
   {
-    to: "#",
+    to: "/admin/analytics",
     icon: BarChart3,
     title: "Аналитика",
-    description: "KPI и графики платформы. Появится после analytics-service.",
-    enabled: false,
+    description: "KPI платформы, динамика активности и распределения по вердиктам и языкам.",
+    enabled: true,
   },
   {
-    to: "#",
+    to: "/admin/analytics",
     icon: ShieldCheck,
     title: "Журнал событий",
-    description: "Аудит-лог действий администратора. Появится позже.",
-    enabled: false,
+    description: "Аудит-лог всех событий платформы из общего потока Kafka.",
+    enabled: true,
   },
 ];
 

@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 const NAV_BY_ROLE: Record<string, { to: string; label: string }[]> = {
   ADMIN: [
     { to: "/admin", label: "Главная" },
+    { to: "/admin/analytics", label: "Аналитика" },
     { to: "/admin/users", label: "Пользователи" },
     { to: "/sessions", label: "Сессии" },
     { to: "/tasks", label: "Задачи" },
