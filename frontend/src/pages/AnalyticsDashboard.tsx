@@ -26,40 +26,12 @@ import {
 } from "recharts";
 import { api } from "@/lib/api";
 import type {
-  AnalyticsAuditEntry,
   AnalyticsDailyPoint,
   AnalyticsOverview,
   AnalyticsSlice,
 } from "@/types/api";
+import { PIE_COLORS, VERDICT_LABEL, formatPrice } from "@/lib/analytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const PIE_COLORS = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#7c3aed", "#0891b2", "#db2777"];
-
-const VERDICT_LABEL: Record<string, string> = {
-  HIRE: "Нанимать",
-  NO_HIRE: "Отказать",
-  MAYBE: "Под вопросом",
-};
-
-const EVENT_LABEL: Record<string, string> = {
-  "user-registered": "Регистрация",
-  "session-created": "Сессия создана",
-  "session-completed": "Сессия завершена",
-  "code-executed": "Запуск кода",
-  "analysis-completed": "Анализ кода",
-  "review-completed": "Ревью готово",
-  "payment-received": "Оплата",
-  "notification-requested": "Уведомление",
-  "analytics-event": "Событие",
-};
-
-function formatPrice(cents: number) {
-  return `${(cents / 100).toLocaleString("ru-RU")} ₽`;
-}
-
-function shortId(id: string | null) {
-  return id ? id.slice(0, 8) : "—";
-}
 
 export function AnalyticsDashboard() {
   const overview = useQuery({
@@ -83,13 +55,6 @@ export function AnalyticsDashboard() {
   const languages = useQuery({
     queryKey: ["analytics-languages"],
     queryFn: async () => (await api.get<AnalyticsSlice[]>("/analytics/languages")).data,
-  });
-
-  const audit = useQuery({
-    queryKey: ["analytics-audit"],
-    queryFn: async () =>
-      (await api.get<AnalyticsAuditEntry[]>("/analytics/audit", { params: { limit: 50 } })).data,
-    refetchInterval: 30_000,
   });
 
   if (overview.isLoading) {
@@ -225,56 +190,6 @@ export function AnalyticsDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Audit log */}
-      <Card>
-        <CardHeader className="py-4">
-          <CardTitle className="text-lg">Журнал событий</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="py-2 pr-4 font-medium">Время</th>
-                  <th className="py-2 pr-4 font-medium">Событие</th>
-                  <th className="py-2 pr-4 font-medium">Компания</th>
-                  <th className="py-2 pr-4 font-medium">Пользователь</th>
-                  <th className="py-2 pr-4 font-medium">Детали</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(audit.data ?? []).map((e) => (
-                  <tr key={e.id} className="border-b last:border-0">
-                    <td className="py-2 pr-4 whitespace-nowrap text-muted-foreground">
-                      {new Date(e.occurredAt).toLocaleString("ru-RU")}
-                    </td>
-                    <td className="py-2 pr-4">{EVENT_LABEL[e.eventType] ?? e.eventType}</td>
-                    <td className="py-2 pr-4 font-mono text-xs text-muted-foreground">{shortId(e.companyId)}</td>
-                    <td className="py-2 pr-4 font-mono text-xs text-muted-foreground">{shortId(e.userId)}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">
-                      {e.verdict
-                        ? VERDICT_LABEL[e.verdict] ?? e.verdict
-                        : e.language
-                        ? e.language
-                        : e.valueCents != null
-                        ? formatPrice(e.valueCents)
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
-                {(audit.data ?? []).length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="py-6 text-center text-muted-foreground">
-                      Событий пока нет
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

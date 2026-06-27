@@ -18,7 +18,7 @@ const TILES = [
     enabled: true,
   },
   {
-    to: "/admin/analytics",
+    to: "/admin/audit",
     icon: ShieldCheck,
     title: "Журнал событий",
     description: "Аудит-лог всех событий платформы из общего потока Kafka.",
