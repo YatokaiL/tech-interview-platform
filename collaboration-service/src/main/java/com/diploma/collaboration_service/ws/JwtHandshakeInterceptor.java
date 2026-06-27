@@ -25,7 +25,9 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
-    private static final Pattern SESSION_PATH = Pattern.compile(".*/ws/sessions/([0-9a-fA-F-]{36})/?$");
+    // Matches both the code-collab channel (/ws/sessions/{id}) and the call
+    // signaling channel (/ws/calls/{id}); both are scoped to a session UUID.
+    private static final Pattern SESSION_PATH = Pattern.compile(".*/ws/(?:sessions|calls)/([0-9a-fA-F-]{36})/?$");
 
     private final JwtParser jwtParser;
     private final SessionClient sessionClient;

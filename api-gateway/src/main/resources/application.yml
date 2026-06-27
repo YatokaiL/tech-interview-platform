@@ -52,6 +52,11 @@ spring:
               predicates:
                 - Path=/ws/sessions/**
 
+            - id: collaboration-service-calls-ws
+              uri: ${COLLABORATION_SERVICE_WS_URI:ws://collaboration-service:8085}
+              predicates:
+                - Path=/ws/calls/**
+
             - id: execution-service
               uri: ${EXECUTION_SERVICE_URI:http://execution-service:8086}
               predicates:
