@@ -16,6 +16,8 @@ import { SessionFormPage } from "@/pages/sessions/SessionFormPage";
 import { SessionDetailPage } from "@/pages/sessions/SessionDetailPage";
 import { SessionReviewPage } from "@/pages/sessions/SessionReviewPage";
 import { SubscriptionPage } from "@/pages/SubscriptionPage";
+import { AnalyticsDashboard } from "@/pages/AnalyticsDashboard";
+import { AuditLogPage } from "@/pages/AuditLogPage";
 
 export default function App() {
   return (
@@ -54,6 +56,8 @@ export default function App() {
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<UsersPage />} />
+              <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
+              <Route path="/admin/audit" element={<AuditLogPage />} />
             </Route>
           </Route>
         </Route>

@@ -351,6 +351,42 @@ export interface AppNotification {
   createdAt: string;
 }
 
+// ─── Analytics (admin) ─────────────────────────────────────────────
+export interface AnalyticsOverview {
+  totalEvents: number;
+  usersRegistered: number;
+  sessionsCreated: number;
+  sessionsCompleted: number;
+  codeExecutions: number;
+  analysesCompleted: number;
+  reviewsCompleted: number;
+  paymentsReceived: number;
+  revenueCents: number;
+}
+
+export interface AnalyticsDailyPoint {
+  day: string;
+  sessions: number;
+  reviews: number;
+  executions: number;
+}
+
+export interface AnalyticsSlice {
+  label: string;
+  count: number;
+}
+
+export interface AnalyticsAuditEntry {
+  id: string;
+  eventType: string;
+  companyId: string | null;
+  userId: string | null;
+  language: string | null;
+  verdict: string | null;
+  valueCents: number | null;
+  occurredAt: string;
+}
+
 // ─── User lookup (for selecting participants) ──────────────────────
 export interface UserLookup {
   id: string;
