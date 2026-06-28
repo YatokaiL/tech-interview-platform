@@ -42,9 +42,7 @@ export function useCall({ sessionId, isController }: UseCallOptions) {
   const localStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
-  const makingOfferRef = useRef(false);
-  const ignoreOfferRef = useRef(false);
-  const politeRef = useRef(false);
+  const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const micRef = useRef(true);
   const camRef = useRef(true);
   const screenRef = useRef(false);
@@ -76,19 +74,27 @@ export function useCall({ sessionId, isController }: UseCallOptions) {
     }
   }, []);
 
-  const negotiate = useCallback(async () => {
+  // Deterministic 1:1 initiator: the peer with the larger userId sends the offer,
+  // regardless of who joined first — no glare, no lost offers.
+  const makeOffer = useCallback(async () => {
     const pc = pcRef.current;
     if (!pc) return;
     try {
-      makingOfferRef.current = true;
-      await pc.setLocalDescription();
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
       wsSend({ type: "sdp", description: pc.localDescription });
     } catch (e) {
-      console.error("negotiate failed", e);
-    } finally {
-      makingOfferRef.current = false;
+      console.error("makeOffer failed", e);
     }
   }, [wsSend]);
+
+  const maybeOffer = useCallback(
+    (peer: CallPeer) => {
+      setRemotePeer(peer);
+      if (myId > peer.userId) void makeOffer();
+    },
+    [myId, makeOffer]
+  );
 
   const handleSignal = useCallback(
     async (msg: CallServerMessage) => {
@@ -96,16 +102,11 @@ export function useCall({ sessionId, isController }: UseCallOptions) {
       switch (msg.type) {
         case "joined": {
           setPhaseState(msg.phase);
-          if (msg.peers.length > 0) {
-            const peer = msg.peers[0];
-            setRemotePeer(peer);
-            politeRef.current = myId < peer.userId;
-          }
+          if (msg.peers.length > 0) maybeOffer(msg.peers[0]);
           break;
         }
         case "peer-joined": {
-          setRemotePeer(msg.from);
-          politeRef.current = myId < msg.from.userId;
+          maybeOffer(msg.from);
           // Let the newcomer know our current mic/cam/screen state.
           sendMediaState();
           break;
@@ -114,28 +115,38 @@ export function useCall({ sessionId, isController }: UseCallOptions) {
           setRemotePeer(null);
           setRemoteStream(null);
           setRemoteMedia({ mic: false, cam: false, screen: false });
+          pendingCandidatesRef.current = [];
           break;
         }
         case "sdp": {
           if (!pc) return;
-          const desc = msg.description;
-          const collision =
-            desc.type === "offer" && (makingOfferRef.current || pc.signalingState !== "stable");
-          ignoreOfferRef.current = !politeRef.current && collision;
-          if (ignoreOfferRef.current) return;
-          await pc.setRemoteDescription(desc);
-          if (desc.type === "offer") {
-            await pc.setLocalDescription();
+          await pc.setRemoteDescription(msg.description);
+          // Flush any ICE candidates that arrived before the remote description.
+          for (const c of pendingCandidatesRef.current) {
+            try {
+              await pc.addIceCandidate(c);
+            } catch (e) {
+              console.error("addIceCandidate (queued) failed", e);
+            }
+          }
+          pendingCandidatesRef.current = [];
+          if (msg.description.type === "offer") {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
             wsSend({ type: "sdp", description: pc.localDescription });
           }
           break;
         }
         case "ice": {
           if (!pc) return;
-          try {
-            await pc.addIceCandidate(msg.candidate);
-          } catch (e) {
-            if (!ignoreOfferRef.current) console.error("addIceCandidate failed", e);
+          if (pc.remoteDescription) {
+            try {
+              await pc.addIceCandidate(msg.candidate);
+            } catch (e) {
+              console.error("addIceCandidate failed", e);
+            }
+          } else {
+            pendingCandidatesRef.current.push(msg.candidate);
           }
           break;
         }
@@ -149,7 +160,7 @@ export function useCall({ sessionId, isController }: UseCallOptions) {
         }
       }
     },
-    [myId, wsSend, sendMediaState]
+    [wsSend, sendMediaState, maybeOffer]
   );
 
   // Join the call: build the peer connection, attach local tracks, open signaling.
@@ -162,9 +173,6 @@ export function useCall({ sessionId, isController }: UseCallOptions) {
     pcRef.current = pc;
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
-    pc.onnegotiationneeded = () => {
-      void negotiate();
-    };
     pc.onicecandidate = ({ candidate }) => {
       if (candidate) wsSend({ type: "ice", candidate: candidate.toJSON() });
     };
@@ -196,7 +204,7 @@ export function useCall({ sessionId, isController }: UseCallOptions) {
       setRemotePeer(null);
       setRemoteStream(null);
     };
-  }, [token, sessionId, prepareMedia, negotiate, wsSend, handleSignal, sendMediaState]);
+  }, [token, sessionId, prepareMedia, wsSend, handleSignal, sendMediaState]);
 
   const cleanup = useCallback(() => {
     wsRef.current?.close();
