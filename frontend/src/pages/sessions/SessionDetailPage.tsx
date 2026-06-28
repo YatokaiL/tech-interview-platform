@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CollabRoom, type CollabRoomHandle } from "@/components/CollabRoom";
+import { InterviewRoom } from "@/components/InterviewRoom";
 import { useUserProfile, userDisplay } from "@/lib/users";
 
 function errorMessage(err: unknown, fallback: string) {
@@ -167,7 +168,11 @@ export function SessionDetailPage() {
         </div>
       </div>
 
-      {showCollab && <CollabRoom ref={collabRef} session={session} />}
+      {session.status === "IN_PROGRESS" ? (
+        <InterviewRoom session={session} collabRef={collabRef} />
+      ) : (
+        showCollab && <CollabRoom ref={collabRef} session={session} />
+      )}
 
       {isAdmin && <SessionParamsCard session={session} />}
     </div>
