@@ -1,5 +1,6 @@
 package com.diploma.collaboration_service.config;
 
+import com.diploma.collaboration_service.ws.CallSignalingHandler;
 import com.diploma.collaboration_service.ws.CollabWebSocketHandler;
 import com.diploma.collaboration_service.ws.JwtHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +19,15 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private static final int MAX_MESSAGE_BYTES = 1_048_576; // 1 MB — Java sources grow fast past the 8 KB default
 
     private final CollabWebSocketHandler handler;
+    private final CallSignalingHandler callHandler;
     private final JwtHandshakeInterceptor handshakeInterceptor;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(handler, "/ws/sessions/*")
+                .addInterceptors(handshakeInterceptor)
+                .setAllowedOriginPatterns("*");
+        registry.addHandler(callHandler, "/ws/calls/*")
                 .addInterceptors(handshakeInterceptor)
                 .setAllowedOriginPatterns("*");
     }
