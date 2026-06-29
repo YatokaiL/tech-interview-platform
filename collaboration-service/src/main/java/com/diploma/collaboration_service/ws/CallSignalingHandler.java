@@ -98,9 +98,6 @@ public class CallSignalingHandler extends TextWebSocketHandler {
         }
     }
 
-    // --- helpers -----------------------------------------------------------
-
-    /** Forwards a message to the other peer(s) verbatim, stamping the sender. */
     private void relay(CallRoom room, WebSocketSession sender, JwtPrincipal principal, JsonNode payload) {
         ObjectNode out = payload.deepCopy();
         out.set("from", presence(principal));
